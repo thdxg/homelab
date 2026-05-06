@@ -1,27 +1,16 @@
 # Bootstrap
 
-The bootstrap process sets up the initial infrastructure for k3s. This includes changing OS configuration (e.g. AppArmor), installing k3s on nodes, and installing Cilium as a CNI and kube-proxy replacement.
+Initial cluster setup. Tasks defined in [`mise.toml`](mise.toml) take two fresh Ubuntu nodes to a working k3s + Cilium cluster.
 
-## Prerequisites
+## Details
 
-1. Two nodes running Ubuntu Server 26.04 (`node-1`, `node-2`)
-2. Password-less SSH access to the nodes
-3. Local IP and Tailscale IP set as environment variables in the root `mise.toml`
+- Relax the `cri-containerd` AppArmor profile on each node so k3s pods can start on Ubuntu 26.04.
+- Install k3s — server on `node-1`, agent on `node-2` — with Flannel, kube-proxy, servicelb, and Traefik disabled, leaving CNI and load balancing to Cilium.
+- Fetch the kubeconfig from `node-1` to the operator machine.
+- Install Cilium as kube-proxy replacement, with vxlan tunneling, BPF masquerade, L2 announcements, Gateway API, and Hubble enabled, then run a connectivity test.
 
-## Process
+The aggregate `all` task chains all of the above. Uninstall tasks for the k3s server and agent are also defined.
 
-To set up everything in one command, run:
+## Inputs
 
-```sh
-mise run //bootstrap:all
-```
-
-Alternatively, use individual commands:
-
-```sh
-mise run //bootstrap:k3s:install:master
-mise run //bootstrap:k3s:install:worker
-mise run //bootstrap:k3s:kubeconfig
-mise run //bootstrap:cilium:install
-mise run //bootstrap:cilium:test
-```
+Env vars from the root [`mise.toml`](../mise.toml): `NODE_1_IP_LOCAL`, `NODE_1_IP_TAILSCALE`, `NODE_2_IP_LOCAL`, `NODE_2_IP_TAILSCALE`. Password-less SSH to `node-1` and `node-2` is assumed.
