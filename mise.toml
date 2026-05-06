@@ -1,0 +1,19 @@
+experimental_monorepo_root = true
+
+[settings]
+experimental = true
+
+[monorepo]
+config_roots = [
+    "bootstrap",
+]
+
+[env]
+NODE_1_IP_LOCAL = "10.0.0.47"
+NODE_1_IP_TAILSCALE = "100.85.87.93"
+NODE_2_IP_LOCAL = "10.0.0.186"
+NODE_2_IP_TAILSCALE = "100.83.167.91"
+
+[tools]
+cilium-cli = "latest"
+kubectl = "latest"

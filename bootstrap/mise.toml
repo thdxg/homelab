@@ -1,0 +1,124 @@
+[env]
+CLUSTER_CIDR = "10.244.0.0/16"
+
+[tasks."all"]
+run = [
+  { tasks = ["os:apparmor node-1", "os:apparmor node-2"] },
+  { task = "k3s:install:master" },
+  { task = "k3s:install:worker" },
+  { task = "k3s:kubeconfig" },
+  { task = "cilium:install" },
+  { task = "cilium:test" }
+]
+
+[tasks."k3s:install:master"]
+description = "Install k3s server"
+run = """
+ssh node-1 -- bash -s << EOF
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" sh -s - \
+  --flannel-backend=none \
+  --disable-network-policy \
+  --disable-kube-proxy \
+  --disable servicelb \
+  --disable traefik \
+  --cluster-cidr={{ env.CLUSTER_CIDR }} \
+  --node-ip={{ env.NODE_1_IP_LOCAL }} \
+  --advertise-address={{ env.NODE_1_IP_LOCAL }} \
+  --bind-address={{ env.NODE_1_IP_LOCAL }} \
+  --tls-san={{ env.NODE_1_IP_LOCAL }} \
+  --tls-san={{ env.NODE_1_IP_TAILSCALE }} \
+  --write-kubeconfig-mode=644
+EOF
+"""
+
+[tasks."k3s:install:worker"]
+description = "Install k3s agent"
+run = """
+TOKEN=$(ssh node-1 "sudo cat /var/lib/rancher/k3s/server/node-token")
+ssh node-2 -- bash -s << EOF
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent" sh -s - \
+  --server=https://{{ env.NODE_1_IP_LOCAL }}:6443 \
+  --token=$TOKEN \
+  --node-ip={{ env.NODE_2_IP_LOCAL }}
+EOF
+"""
+
+[tasks."k3s:uninstall:master"]
+description = "Uninstall k3s server"
+run = """
+ssh node-1 "sudo /usr/local/bin/k3s-uninstall.sh" 
+"""
+
+[tasks."k3s:uninstall:worker"]
+description = "Uninstall k3s agent"
+run = """
+ssh node-2 "sudo /usr/local/bin/k3s-agent-uninstall.sh" 
+"""
+
+[tasks."k3s:kubeconfig"]
+description = "Save kubeconfig on this machine"
+run = """
+ssh node-1 "sudo cat /etc/rancher/k3s/k3s.yaml" > ~/.kube/config
+"""
+
+[tasks."os:apparmor"]
+description = "Disable restrictive cri-containerd AppArmor profile"
+usage = """
+arg <node> help="Node hostname"
+"""
+run = """
+ssh {{ usage.node }} -- bash -s << EOF
+sudo mkdir -p /var/lib/rancher/k3s/agent/etc/containerd
+sudo tee /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl > /dev/null << 'TOML'
+version = 2
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = true
+  AppArmorProfile = "unconfined"
+TOML
+sudo rm -f /etc/apparmor.d/disable/cri-containerd.apparmor.d
+sudo tee /etc/apparmor.d/cri-containerd.apparmor.d > /dev/null << 'PROFILE'
+abi <abi/4.0>,
+include <tunables/global>
+profile cri-containerd.apparmor.d flags=(unconfined) {
+  userns,
+}
+PROFILE
+sudo apparmor_parser -r /etc/apparmor.d/cri-containerd.apparmor.d
+EOF
+"""
+
+[tasks."cilium:install"]
+description = "Install Cilium Gateway API CRDs"
+run = """
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/experimental-install.yaml
+cilium install --version 1.17.6 \
+  --set kubeProxyReplacement=true \
+  --set k8sServiceHost={{ env.NODE_1_IP_LOCAL }} \
+  --set k8sServicePort=6443 \
+  --set ipam.mode=kubernetes \
+  --set k8s.requireIPv4PodCIDR=true \
+  --set routingMode=tunnel \
+  --set tunnelProtocol=vxlan \
+  --set devices=wlan0 \
+  --set bpf.masquerade=true \
+  --set ipv4NativeRoutingCIDR={{ env.CLUSTER_CIDR }} \
+  --set autoDirectNodeRoutes=false \
+  --set operator.replicas=1 \
+  --set cni.exclusive=true \
+  --set gatewayAPI.enabled=true \
+  --set l2announcements.enabled=true \
+  --set k8sClientRateLimit.qps=50 \
+  --set k8sClientRateLimit.burst=100 \
+  --set hubble.enabled=true \
+  --set hubble.relay.enabled=true \
+  --set hubble.ui.enabled=true
+cilium status --wait
+"""
+
+[tasks."cilium:test"]
+description = "Test Cilium connectivity"
+run = """
+cilium connectivity test
+"""
