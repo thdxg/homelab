@@ -93,7 +93,7 @@ EOF
 description = "Install Cilium Gateway API CRDs"
 run = """
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/experimental-install.yaml
-cilium install --version 1.17.6 \
+cilium install --version 1.19.3 \
   --set kubeProxyReplacement=true \
   --set k8sServiceHost={{ env.NODE_1_IP_LOCAL }} \
   --set k8sServicePort=6443 \
