@@ -3,12 +3,15 @@ CLUSTER_CIDR = "10.244.0.0/16"
 
 [tasks."all"]
 run = [
-  { tasks = ["os:apparmor node-1", "os:apparmor node-2"] },
+  { tasks = [
+    "os:apparmor node-1",
+    "os:apparmor node-2",
+  ] },
   { task = "k3s:install:master" },
   { task = "k3s:install:worker" },
   { task = "k3s:kubeconfig" },
   { task = "cilium:install" },
-  { task = "cilium:test" }
+  { task = "cilium:test" },
 ]
 
 [tasks."k3s:install:master"]
@@ -120,5 +123,6 @@ cilium status --wait
 [tasks."cilium:test"]
 description = "Test Cilium connectivity"
 run = """
-cilium connectivity test
+cilium connectivity test --cleanup-on-failure --all-flows
+kubectl delete namespace cilium-test-1 cilium-test-ccnp1 cilium-test-ccnp2
 """
