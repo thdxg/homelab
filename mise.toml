@@ -8,10 +8,11 @@ config_roots = ["bootstrap"]
 
 [env]
 _.file = [".env"]
-NODE_1_IP_LOCAL = { required = true }
+CLUSTER_CIDR = { required = true }
 NODE_1_IP_TAILSCALE = { required = true }
-NODE_2_IP_LOCAL = { required = true }
+NODE_1_IP_ETH = { required = true }
 NODE_2_IP_TAILSCALE = { required = true }
+NODE_2_IP_ETH = { required = true }
 
 [tools]
 cilium-cli = "latest"
