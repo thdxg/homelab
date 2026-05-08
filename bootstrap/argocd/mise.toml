@@ -1,2 +1,11 @@
 [tasks.install]
 description = "Install ArgoCD"
+run = """
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+helm upgrade --install argocd argo/argo-cd \
+  --namespace argocd \
+  --create-namespace \
+  -f ./values.yaml
+kubectl apply -f ./root-app.yaml
+"""
