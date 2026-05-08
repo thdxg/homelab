@@ -1,0 +1,59 @@
+[tasks.apparmor]
+description = "Disable restrictive cri-containerd AppArmor profile"
+usage = """
+arg <node> help="Node hostname"
+"""
+run = """
+ssh {{ usage.node }} -- bash -s << EOF
+sudo mkdir -p /var/lib/rancher/k3s/agent/etc/containerd
+sudo tee /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl > /dev/null << 'TOML'
+version = 2
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = true
+  AppArmorProfile = "unconfined"
+TOML
+sudo rm -f /etc/apparmor.d/disable/cri-containerd.apparmor.d
+sudo tee /etc/apparmor.d/cri-containerd.apparmor.d > /dev/null << 'PROFILE'
+abi <abi/4.0>,
+include <tunables/global>
+profile cri-containerd.apparmor.d flags=(unconfined) {
+  userns,
+}
+PROFILE
+sudo apparmor_parser -r /etc/apparmor.d/cri-containerd.apparmor.d
+EOF
+"""
+
+[tasks.eth0]
+description = "Assign static IPs on the ethernet interface"
+run = """
+ssh node-1 bash -s << EOF
+sudo tee /etc/netplan/99-eth0-static.yaml > /dev/null << 'YAML'
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - {{ env.NODE_1_IP_ETH }}/30
+YAML
+sudo chmod 600 /etc/netplan/99-eth0-static.yaml
+sudo ip link set eth0 up
+sudo netplan apply
+EOF
+
+ssh node-2 bash -s << EOF
+sudo tee /etc/netplan/99-eth0-static.yaml > /dev/null << 'YAML'
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - {{ env.NODE_2_IP_ETH }}/30
+YAML
+sudo chmod 600 /etc/netplan/99-eth0-static.yaml
+sudo ip link set eth0 up
+sudo netplan apply
+EOF
+"""

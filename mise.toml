@@ -4,7 +4,7 @@ experimental_monorepo_root = true
 experimental = true
 
 [monorepo]
-config_roots = ["bootstrap"]
+config_roots = ["bootstrap", "bootstrap/*"]
 
 [env]
 _.file = [".env"]
@@ -17,3 +17,4 @@ NODE_2_IP_ETH = { required = true }
 [tools]
 cilium-cli = "latest"
 kubectl = "latest"
+helm = "latest"

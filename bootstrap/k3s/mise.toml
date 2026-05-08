@@ -1,0 +1,50 @@
+[tasks."install:master"]
+description = "Install k3s server"
+run = """
+ssh node-1 -- bash -s << EOF
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" sh -s - \
+  --flannel-backend=none \
+  --disable-network-policy \
+  --disable-kube-proxy \
+  --disable servicelb \
+  --disable traefik \
+  --cluster-cidr={{ env.CLUSTER_CIDR }} \
+  --node-ip={{ env.NODE_1_IP_ETH }} \
+  --advertise-address={{ env.NODE_1_IP_ETH }} \
+  --tls-san={{ env.NODE_1_IP_ETH }} \
+  --tls-san={{ env.NODE_1_IP_TAILSCALE }} \
+  --write-kubeconfig-mode=644
+EOF
+"""
+
+[tasks."install:worker"]
+description = "Install k3s agent"
+run = """
+TOKEN=$(ssh node-1 "sudo cat /var/lib/rancher/k3s/server/node-token")
+ssh node-2 -- bash -s << EOF
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent" sh -s - \
+  --server=https://{{ env.NODE_1_IP_ETH }}:6443 \
+  --token=$TOKEN \
+  --node-ip={{ env.NODE_2_IP_ETH }}
+EOF
+"""
+
+[tasks."uninstall:master"]
+description = "Uninstall k3s server"
+run = """
+ssh node-1 "sudo /usr/local/bin/k3s-uninstall.sh" 
+"""
+
+[tasks."uninstall:worker"]
+description = "Uninstall k3s agent"
+run = """
+ssh node-2 "sudo /usr/local/bin/k3s-agent-uninstall.sh" 
+"""
+
+[tasks."kubeconfig"]
+description = "Save kubeconfig on this machine"
+run = """
+ssh node-1 "sudo cat /etc/rancher/k3s/k3s.yaml" \
+  | sed 's/127.0.0.1/{{ env.NODE_1_IP_TAILSCALE }}/g' \
+  > ~/.kube/config
+"""
