@@ -18,3 +18,17 @@ NODE_2_IP_ETH = { required = true }
 cilium-cli = "latest"
 kubectl = "latest"
 helm = "latest"
+
+[tasks.up]
+description = "Uncordon all nodes and make them schedulable"
+run = """
+kubectl uncordon node-1 node-2
+"""
+
+[tasks.down]
+description = "Safely drain all nodes and make them unschedulable"
+run = """
+kubectl cordon node-1 node-2
+kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data
+kubectl drain node-2 --ignore-daemonsets --delete-emptydir-data
+"""
