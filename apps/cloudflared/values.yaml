@@ -1,3 +1,15 @@
-cloudflare:
-  secretName: cloudflared-tunnel-token
-  secretKey: tunnelToken
+tunnelSecrets:
+  existingConfigJsonFileSecret:
+    name: config-secret
+  existingPemFileSecret:
+    name: cert-secret
+
+ingress:
+  # - hostname: taehoonlee.dev
+  #   service: http://cilium-gateway-public.networking.svc.cluster.local:80
+  # - hostname: "*.taehoonlee.dev"
+  #   service: http://cilium-gateway-public.networking.svc.cluster.local:80
+  - service: http_status:404
+
+replica:
+  count: 2

@@ -8,9 +8,9 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://charts.moonswitch.com
-      chart: cloudflare-tunnel-remote
-      targetRevision: 0.1.4
+    - repoURL: https://community-charts.github.io/helm-charts
+      chart: cloudflared
+      targetRevision: 2.2.7
       helm:
         valueFiles:
           - $homelab/apps/cloudflared/values.yaml

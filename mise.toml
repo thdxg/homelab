@@ -26,6 +26,7 @@ age = "latest"
 argocd = "latest"
 kustomize = "latest"
 ksops = "latest"
+cloudflared = "latest"
 
 [tasks.up]
 description = "Uncordon all nodes and make them schedulable"
