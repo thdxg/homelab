@@ -8,18 +8,15 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: https://community-charts.github.io/helm-charts
-      chart: cloudflared
-      targetRevision: 2.2.7
+    - repoURL: https://cloudflare.github.io/helm-charts
+      chart: cloudflare-tunnel-remote
+      targetRevision: 0.1.2
       helm:
         valueFiles:
           - $homelab/apps/cloudflared/values.yaml
     - repoURL: https://github.com/thdxg/homelab.git
       targetRevision: main
       ref: homelab
-    - repoURL: https://github.com/thdxg/homelab.git
-      targetRevision: main
-      path: apps/cloudflared/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: cloudflared

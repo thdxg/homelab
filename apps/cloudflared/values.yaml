@@ -1,21 +1,17 @@
-replica:
-  allNodes: false
-  count: 2
-
-tunnelSecrets:
-  base64EncodedPemFile: "ZHVtbXk=" # base64 encoding of "dummy"; cloudflared chart requires this field but we only use the credentials file
-  existingConfigJsonFileSecret:
-    name: cloudflared-secret
-    key: credentials
-
-tunnelConfig:
-  name: "7446ad96-71fb-4b84-ac97-f06a17797ae8"
-  protocol: http2
-
-ingress:
-  - hostname: taehoonlee.dev
-    service: http://traefik.kube-system.svc.cluster.local:80
-  - hostname: "*.overburrow.org"
-    service: http://traefik.kube-system.svc.cluster.local:80
-  - service: http_status:404 # catch-all
-
+cloudflare:
+    tunnel_token: ENC[AES256_GCM,data:Ruo4MJw7ShMZHeKRJHaLTtAEnBm2MLRHhl0TK9O6L9RmWd6VpSvtyqgZre9UBrS3F888c3jPl5qGAU/SPkuzUX7k2taRSitGNtjF1Q8hd/+KHrRTSNCfRzs3ZLxpxHtb7dmf/hHjRHMogyVCBugwKrD3SSbSGdhFPMIGxFDp4jKfKX6C0hl5RxOQza+E3V1nGi3NvGy6SQN2KtE+zsbgh3Cd0ovfyPI+gbITKnzuvPiwZE254EDEnw==,iv:GNMf6jHzrluytAW0UlP++ELluk06iHkQV8M9Gh8uRXk=,tag:5z8Ar5eL+v/b02cht7XaTw==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA1a1BIc09Rd0xPVG9UUGN1
+            cEphRWhkeFhQWUpQNGJUcUxCY1MwVUt5eWk0CnFUVURuL3lNUTZHVE8vU21jY3FG
+            c2tWdlRSbTVwRmVKQnMraHAyektLa2sKLS0tIG4reTB3ZmtiTEpNTitoVnlpV3dq
+            RmlpVllSYUhkQnVkdnpYdURUdmY3ckkKgwnI2GPZkEzBoFwpLYyrF4NtFVjmcz33
+            hA+vQWYZuGUtU3wDzJK8Eg8f3Zk1frEKNXGQH9krZXoeOpCB1HtAUQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1mpfza3ke8r9ud6cylwzx4txarfasn05cadu34az4v426d23tvfgqq6ma37
+    encrypted_regex: ^(tunnel_token)$
+    lastmodified: "2026-05-15T19:47:00Z"
+    mac: ENC[AES256_GCM,data:dKww0PdfVKjX//51KmFTy8cktLN30pTzO7+UmYWWmRVaiu4QLJpvScM7ZmEcfaQwQx6wvh4dXZ1XNTIGTOcX7MBb8PYtZKQyirzeyU/fTHUQbbjAMxYWpdP3cj+r7z1RKoeY2fR2I9U5Ar+cthJjyZ80gMWQix6kD8q5v1Q07pU=,iv:bpTIoOyit8y1nL27e4zBWusbFEyn6wExpl9if7ZotVM=,tag:NZNhCla8EO8AirQEzuEPWw==,type:str]
+    version: 3.13.0
