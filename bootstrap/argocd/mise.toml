@@ -19,7 +19,9 @@ description = "Generate SOPS secret"
 dir = "{{ cwd }}"
 run = """
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-age-keygen -o {{ vars.secret_path }}
+if [ ! -f {{ vars.secret_path }} ]; then
+  age-keygen -o {{ vars.secret_path }}
+fi
 kubectl create secret generic sops-age-key \
   --namespace argocd \
   --from-file=key.txt={{ vars.secret_path }} \
