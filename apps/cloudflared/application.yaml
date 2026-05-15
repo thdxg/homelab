@@ -17,6 +17,9 @@ spec:
     - repoURL: https://github.com/thdxg/homelab.git
       targetRevision: main
       ref: homelab
+    - repoURL: https://github.com/thdxg/homelab.git
+      targetRevision: main
+      path: apps/cloudflared/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: cloudflared
