@@ -13,6 +13,7 @@ NODE_1_IP_TAILSCALE = { required = true }
 NODE_1_IP_ETH = { required = true }
 NODE_2_IP_TAILSCALE = { required = true }
 NODE_2_IP_ETH = { required = true }
+SOPS_AGE_KEY_FILE = { required = true }
 
 [tools]
 cilium-cli = "latest"
