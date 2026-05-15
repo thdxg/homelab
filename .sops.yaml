@@ -1,4 +1,4 @@
 creation_rules:
-  - path_regex: apps/cloudflared/values.yaml
-    encrypted_regex: "^(tunnel_token)$"
+  - path_regex: apps/.*secret.*\.yaml
+    encrypted_regex: "^(data|stringData)$"
     age: age1qrwxv75xa4nqeku2cjmwcy2xvsu72ey8cwz4q0dy28s8cd5c6fws4yhp3t

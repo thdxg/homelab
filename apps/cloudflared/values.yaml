@@ -1,17 +1,3 @@
 cloudflare:
-    tunnel_token: ENC[AES256_GCM,data:YX5ztX9zfWkfg7QjHp5SODWriH57zIgaPaNzy211tEcj5zD9qgMT0jqS8eCXYnLaOj2N7TpE2volJFwXU3RQB9K6H4MhGEpzrdnRgqpRDQeHpNTP4cgL8sYjYtfij+fCDrfPWlesFmvFcDbLvX4r/AUuYMOAHRjfZ8YyT2Dzx3ZN4/McryLPCRYIZS9jRy8nItZq1yfc5qll84U420lw6VnULWuYdNkgvo4FwvfBar9CRxaf7zCauw==,iv:jgit4cieoxNPqTdMRWpfz5OB3vGRiCTxaIbPI5RddGQ=,tag:Ji3tFf5qVcVmwug1nPOcBg==,type:str]
-sops:
-    age:
-        - enc: |
-            -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBMRVIxVjJ4VHZNTTVrY2xD
-            TXlZb1BJcC9MVDhMTGVjanlCSzN2UHd4eFRBCkwrZ0d6cVZjOXZtQlFsRml3OHlX
-            YnpHWXdCcWo5T2JLb2Zad2FHTHpaZTAKLS0tIExVUVRISDV5ckw0YkM1S29uRjZJ
-            Qlh1cmMya1N5cnVucHgzWmI4b2ZQenMKPzMrNbO1Qpj8AaYPzICexGTpDIFa+7rv
-            XD81KgMJgC6V+sqd3Zfhn0YsrVkxtMB+XbYmNxm/MCZTHRARPIgmjg==
-            -----END AGE ENCRYPTED FILE-----
-          recipient: age1qrwxv75xa4nqeku2cjmwcy2xvsu72ey8cwz4q0dy28s8cd5c6fws4yhp3t
-    encrypted_regex: ^(tunnel_token)$
-    lastmodified: "2026-05-15T20:20:32Z"
-    mac: ENC[AES256_GCM,data:sd1dCRVR24xvjpxleAx6HmVJIhqxwIu0hdxdkxcO6yhOFTS6RzbmhazYGA3nmJbmfkuc4FNzrJey/4w8oQMOBJiu+tFmy55Cj7s1XPw669V8M2BZmJWo/raazCAUp+wxYZE0YHHyvCTJ3mrOgZXzlZR6/z+HwEUF7VJxEnPteJI=,iv:9cdJdbQCpcDwnzFQN3TJZfWxC282P51Jin3DCqkdCOY=,tag:0gania1odxtKWuYDs/gBNA==,type:str]
-    version: 3.13.0
+  secretName: cloudflared-tunnel-token
+  secretKey: tunnelToken
