@@ -27,6 +27,17 @@ repoServer:
     limits:
       cpu: "500m"
       memory: "512Mi"
+  env:
+    - name: SOPS_AGE_KEY_FILE
+      value: /home/argocd/keys/key.txt
+  volumes:
+    - name: sops-age-key
+      secret:
+        secretName: sops-age-key
+  volumeMounts:
+    - name: sops-age-key
+      mountPath: /home/argocd/keys
+      readOnly: true
 
 applicationSet:
   replicas: 1

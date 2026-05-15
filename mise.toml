@@ -20,6 +20,7 @@ kubectl = "latest"
 helm = "latest"
 sops = "latest"
 age = "latest"
+argocd = "latest"
 
 [tasks.up]
 description = "Uncordon all nodes and make them schedulable"
