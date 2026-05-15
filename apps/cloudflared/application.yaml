@@ -13,10 +13,10 @@ spec:
       targetRevision: 2.2.7
       helm:
         valueFiles:
-          - $apps/cloudflared/values.yaml
+          - $homelab/apps/cloudflared/values.yaml
     - repoURL: https://github.com/thdxg/homelab.git
       targetRevision: main
-      ref: apps
+      ref: homelab
     - repoURL: https://github.com/thdxg/homelab.git
       targetRevision: main
       path: apps/cloudflared/manifests
