@@ -1,3 +1,6 @@
+tunnelConfig:
+  name: homelab
+
 tunnelSecrets:
   existingConfigJsonFileSecret:
     name: config-secret
@@ -13,3 +16,4 @@ ingress:
 
 replica:
   count: 2
+  allNodes: true
