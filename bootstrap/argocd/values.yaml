@@ -18,9 +18,10 @@ server:
       cpu: "500m"
       memory: "256Mi"
 
+# Modified from https://github.com/viaduct-ai/kustomize-sops#argo-cd-helm-chart-with-custom-tooling
 repoServer:
   replicas: 1
-  requests:
+  resources:
     requests:
       cpu: "100m"
       memory: "128Mi"
@@ -31,13 +32,29 @@ repoServer:
     - name: SOPS_AGE_KEY_FILE
       value: /home/argocd/keys/key.txt
   volumes:
+    - name: custom-tools
+      emptyDir: {}
     - name: sops-age-key
       secret:
         secretName: sops-age-key
   volumeMounts:
+    - mountPath: /usr/local/bin/kustomize
+      name: custom-tools
+      subPath: kustomize
+    - mountPath: /usr/local/bin/ksops
+      name: custom-tools
+      subPath: ksops
     - name: sops-age-key
       mountPath: /home/argocd/keys
       readOnly: true
+  initContainers:
+    - name: install-ksops
+      image: viaductoss/ksops:v4.5.1
+      command:
+        ["/usr/local/bin/ksops", "install", "--with-kustomize", "/custom-tools"]
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools
 
 applicationSet:
   replicas: 1
@@ -66,3 +83,4 @@ configs:
   cm:
     "application.resourceTrackingMethod": "annotation"
     "timeout.reconciliation": "60s"
+    "kustomize.buildOptions": "--enable-alpha-plugins --enable-exec"
