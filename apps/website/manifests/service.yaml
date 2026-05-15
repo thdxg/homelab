@@ -4,7 +4,7 @@ metadata:
   name: website
 spec:
   selector:
-    app.kubernetes.io/name: website
+    app: website
   ports:
     - protocol: HTTP
       port: 80
