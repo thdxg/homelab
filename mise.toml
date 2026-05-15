@@ -24,6 +24,8 @@ helm = "latest"
 sops = "latest"
 age = "latest"
 argocd = "latest"
+kustomize = "latest"
+ksops = "latest"
 
 [tasks.up]
 description = "Uncordon all nodes and make them schedulable"
