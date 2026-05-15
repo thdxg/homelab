@@ -3,9 +3,9 @@ tunnelConfig:
 
 tunnelSecrets:
   existingConfigJsonFileSecret:
-    name: config-secret
+    name: cloudflared-config-secret
   existingPemFileSecret:
-    name: cert-secret
+    name: cloudflared-cert-secret
 
 ingress:
   # - hostname: taehoonlee.dev
