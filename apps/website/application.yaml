@@ -10,7 +10,7 @@ spec:
   sources:
     - repoURL: https://github.com/thdxg/homelab.git
       targetRevision: main
-      path: apps/website
+      path: apps/website/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: website
