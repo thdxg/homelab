@@ -10,4 +10,5 @@ run = [
   { task = "//bootstrap/k3s:kubeconfig" },
   { task = "//bootstrap/cilium:install" },
   { task = "//bootstrap/argocd:install" },
+  { task = "//bootstrap/sops:generate" },
 ]

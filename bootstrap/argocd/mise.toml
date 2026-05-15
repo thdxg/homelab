@@ -9,10 +9,3 @@ helm upgrade --install argocd argo/argo-cd \
   -f ./values.yaml
 kubectl apply -f ./root-app.yaml
 """
-
-[tasks.open]
-description = "Port-forward and open ArgoCD UI"
-run = """
-open http://localhost:8080
-kubectl port-forward service/argocd-server -n argocd 8080:443
-"""

@@ -18,6 +18,8 @@ NODE_2_IP_ETH = { required = true }
 cilium-cli = "latest"
 kubectl = "latest"
 helm = "latest"
+sops = "latest"
+age = "latest"
 
 [tasks.up]
 description = "Uncordon all nodes and make them schedulable"
@@ -31,4 +33,11 @@ run = """
 kubectl cordon node-1 node-2
 kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data
 kubectl drain node-2 --ignore-daemonsets --delete-emptydir-data
+"""
+
+[tasks.argocd]
+description = "Port-forward and open ArgoCD UI in localhost:8080"
+run = """
+open http://localhost:8080/applications
+kubectl port-forward service/argocd-server -n argocd 8080:443
 """

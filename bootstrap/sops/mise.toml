@@ -1,0 +1,8 @@
+[tasks.generate]
+run = """
+age-keygen -o ./.secrets/age.agekey
+kubectl create secret generic sops-age-key \
+  --namespace argocd \
+  --from-file=key.txt=./.secrets/age.agekey
+"""
+dir = "{{ cwd }}"
