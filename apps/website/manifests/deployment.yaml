@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: website
-          image: ghcr.io/thdxg/website:latest
+          image: ghcr.io/thdxg/website:latest # {"$imagepolicy": "flux-system:website"}
           ports:
             - containerPort: 3000

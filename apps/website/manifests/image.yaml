@@ -1,0 +1,46 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: website
+  namespace: flux-system
+spec:
+  image: ghcr.io/thdxg/website
+  interval: 5m
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: website
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: website
+  filterTags:
+    pattern: '^\d{8}-\d{6}-[a-f0-9]+'
+    extract: "$0"
+  policy:
+    alphabetical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageUpdateAutomation
+metadata:
+  name: flux-system
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: flux
+        email: flux@taehoonlee.dev
+    push:
+      branch: main
+  update:
+    strategy: Setters
