@@ -1,0 +1,28 @@
+[vars]
+secret_path = "./.secrets/age.agekey"
+
+[tasks.install]
+description = "Bootstrap flux"
+dir = "{{ cwd }}"
+depends = ["sops"]
+run = """
+flux bootstrap github \
+  --owner=thdxg \
+  --repository=homelab \
+  --branch=main \
+  --path=bootstrap/flux \
+  --personal
+kubectl create secret generic sops-age-key \
+  --namespace=flux-system \
+  --from-file=age.agekey={{ vars.secret_path }} \
+  --dry-run=client -o yaml | kubectl apply -f -
+"""
+
+[tasks.sops]
+description = "Generate SOPS secret"
+dir = "{{ cwd }}"
+run = """
+if [ ! -f {{ vars.secret_path }} ]; then
+  age-keygen -o {{ vars.secret_path }}
+fi
+"""

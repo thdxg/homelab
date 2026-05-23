@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: website
-          image: ghcr.io/thdxg/portfolio:latest
+          image: ghcr.io/thdxg/website:latest
           ports:
             - containerPort: 3000

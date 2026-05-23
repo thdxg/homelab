@@ -14,6 +14,7 @@ NODE_1_IP_ETH = { required = true }
 NODE_2_IP_TAILSCALE = { required = true }
 NODE_2_IP_ETH = { required = true }
 SOPS_AGE_KEY_FILE = { required = true }
+GITHUB_TOKEN = { required = true }
 
 ARGOCD_OPTS = "--port-forward --port-forward-namespace=argocd --plaintext --grpc-web"
 
@@ -27,6 +28,7 @@ argocd = "latest"
 kustomize = "latest"
 ksops = "latest"
 cloudflared = "latest"
+flux2 = "latest"
 
 [tasks.up]
 description = "Uncordon all nodes and make them schedulable"
