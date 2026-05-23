@@ -43,3 +43,10 @@ kubectl cordon node-1 node-2
 kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data
 kubectl drain node-2 --ignore-daemonsets --delete-emptydir-data
 """
+
+[tasks.sync]
+description = "Reconcile flux"
+run = """
+flux reconcile kustomization flux-system --with-source
+flux get kustomizations
+"""
