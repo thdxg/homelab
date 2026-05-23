@@ -11,7 +11,8 @@ flux bootstrap github \
   --repository=homelab \
   --branch=main \
   --path=bootstrap/flux \
-  --personal
+  --token-auth \
+  --components-extra=image-reflector-controller,image-automation-controller
 kubectl create secret generic sops-age-key \
   --namespace=flux-system \
   --from-file=age.agekey={{ vars.secret_path }} \
