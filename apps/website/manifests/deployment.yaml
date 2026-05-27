@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: website-deployment
-  namespace: website
   labels:
     app: website
 spec:
@@ -17,6 +16,6 @@ spec:
     spec:
       containers:
         - name: website
-          image: 20260527-003911-20deca8 # {"$imagepolicy": "flux-system:website:tag"}
+          image: ghcr.io/thdxg/website:latest # {"$imagepolicy": "website:website"}
           ports:
             - containerPort: 3000

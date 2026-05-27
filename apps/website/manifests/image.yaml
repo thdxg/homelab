@@ -2,7 +2,6 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
   name: website
-  namespace: flux-system
 spec:
   image: ghcr.io/thdxg/website
   interval: 5m
@@ -11,7 +10,6 @@ apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: website
-  namespace: flux-system
 spec:
   imageRepositoryRef:
     name: website
@@ -21,3 +19,27 @@ spec:
   policy:
     alphabetical:
       order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: website
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: flux
+        email: flux@taehoonlee.dev
+    push:
+      branch: main
+  update:
+    path: ./apps/website
+    strategy: Setters

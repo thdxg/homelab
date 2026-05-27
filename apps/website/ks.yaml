@@ -7,6 +7,7 @@ spec:
   interval: 5m
   path: ./apps/website/manifests
   prune: true
+  targetNamespace: website
   sourceRef:
     kind: GitRepository
     name: flux-system
