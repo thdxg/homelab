@@ -31,7 +31,7 @@ spec:
   interval: 5m
   sourceRef:
     kind: GitRepository
-    name: flux-system
+    name: website
   git:
     checkout:
       ref:
