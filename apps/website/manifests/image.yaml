@@ -21,26 +21,3 @@ spec:
   policy:
     alphabetical:
       order: asc
----
-apiVersion: image.toolkit.fluxcd.io/v1
-kind: ImageUpdateAutomation
-metadata:
-  name: flux-system
-  namespace: flux-system
-spec:
-  interval: 5m
-  sourceRef:
-    kind: GitRepository
-    name: website
-  git:
-    checkout:
-      ref:
-        branch: main
-    commit:
-      author:
-        name: flux
-        email: flux@taehoonlee.dev
-    push:
-      branch: main
-  update:
-    strategy: Setters
