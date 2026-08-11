@@ -28,12 +28,12 @@ Macterm remote projects `node-1` and `node-2` hold SSH panes to each node.
 Use the bundled helper, which types a command into a pane, waits for a
 runtime-assembled completion marker, and prints only that command's output.
 It lives in this skill's `scripts/` directory — call it by absolute path
-(`~/.claude/skills/healthcheck/scripts/mtrun.sh`), not relative to your
+(`<repo>/.claude/skills/healthcheck/scripts/mtrun.sh`), not relative to your
 working directory:
 
 ```sh
-~/.claude/skills/healthcheck/scripts/mtrun.sh node-1 "kubectl get nodes -o wide"
-~/.claude/skills/healthcheck/scripts/mtrun.sh node-2 "uptime; ip -br addr"
+~/dev/homelab/.claude/skills/healthcheck/scripts/mtrun.sh node-1 "kubectl get nodes -o wide"
+~/dev/homelab/.claude/skills/healthcheck/scripts/mtrun.sh node-2 "uptime; ip -br addr"
 ```
 
 The two nodes are independent panes — send long-running checks to both
