@@ -1,5 +1,7 @@
 .DS_Store
 .env
-.claude
+# Ignore local Claude state but keep shared project skills versioned
+.claude/*
+!.claude/skills
 .secrets
 CLAUDE.md
