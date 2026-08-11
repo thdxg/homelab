@@ -4,4 +4,3 @@
 .claude/*
 !.claude/skills
 .secrets
-CLAUDE.md
