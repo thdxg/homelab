@@ -34,11 +34,12 @@ spec:
         volumeMounts:
           - mountPath: /build/plugins
             name: headlamp-plugins
+    # No PVC: the volumes override below replaces the chart's PVC-backed
+    # volume with an emptyDir, so a PVC would never get a consumer and
+    # local-path's WaitForFirstConsumer binding leaves it Pending forever
+    # (which fails the helm install wait).
     persistentVolumeClaim:
-      accessModes:
-        - ReadWriteOnce
-      enabled: true
-      size: 1Gi
+      enabled: false
     volumeMounts:
       - mountPath: /build/plugins
         name: headlamp-plugins
