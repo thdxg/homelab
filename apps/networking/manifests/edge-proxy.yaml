@@ -1,9 +1,11 @@
 # Public ingress edge. Wifi/router traffic cannot reach cilium's L7
 # (Envoy-backed) service frontends on wlan0 — see cilium/cilium#26584 and
-# bootstrap/cilium/values.yaml — but plain L4 hostPort/NodePort to a normal
-# pod works fine. This nginx bridges the two: L4 hostPort on the wifi side,
-# pod-originated ClusterIP path to the gateway on the cluster side (the
-# same path cloudflared uses).
+# bootstrap/cilium/values.yaml — but a plain L4 NodePort to a normal pod
+# works fine (hostPort does not — its frontends never answer on any
+# interface here). This nginx bridges the two: L4 NodePort 30080 on the
+# wifi side (router translates WAN:80 → node:30080), pod-originated
+# ClusterIP path to the gateway on the cluster side (the same path
+# cloudflared uses).
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -54,7 +56,6 @@ spec:
           image: nginx:1.27-alpine
           ports:
             - containerPort: 80
-              hostPort: 80
           volumeMounts:
             - name: config
               mountPath: /etc/nginx/nginx.conf
@@ -73,3 +74,17 @@ spec:
         - name: config
           configMap:
             name: edge-proxy-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-proxy
+spec:
+  type: NodePort
+  selector:
+    app: edge-proxy
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30080
