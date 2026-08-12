@@ -17,6 +17,7 @@ SOPS_AGE_KEY_FILE = { required = true }
 GITHUB_TOKEN = { required = true }
 WIFI_SSID = { required = true }
 WIFI_PASSWORD = { required = true }
+TAILNET_DOMAIN = { required = true }
 
 ARGOCD_OPTS = "--port-forward --port-forward-namespace=argocd --plaintext --grpc-web"
 
