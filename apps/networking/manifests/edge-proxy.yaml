@@ -2,10 +2,14 @@
 # (Envoy-backed) service frontends on wlan0 — see cilium/cilium#26584 and
 # bootstrap/cilium/values.yaml — but a plain L4 NodePort to a normal pod
 # works fine (hostPort does not — its frontends never answer on any
-# interface here). This nginx bridges the two: L4 NodePort 30080 on the
-# wifi side (router translates WAN:80 → node:30080), pod-originated
+# interface here). This nginx bridges the two: L4 NodePort 30880 on the
+# wifi side (router translates WAN:80 → node:30880), pod-originated
 # ClusterIP path to the gateway on the cluster side (the same path
 # cloudflared uses).
+#
+# 30880 (not the conventional 30080): traffic to 30080 specifically never
+# arrives over the wifi path on this network — every other tested
+# NodePort works — so the AP/router appears to filter that port.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -87,4 +91,4 @@ spec:
     - name: http
       port: 80
       targetPort: 80
-      nodePort: 30080
+      nodePort: 30880
