@@ -2,7 +2,7 @@
 description = "Install Cilium Gateway API CRDs"
 run = """
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/experimental-install.yaml
-cilium install --version 1.19.3 \
+cilium install --version 1.19.6 \
   --values values.yaml \
   --set k8sServiceHost={{ env.NODE_1_IP_ETH }} \
   --set k8sServicePort=6443 \
