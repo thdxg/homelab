@@ -1,0 +1,50 @@
+# Cilium helm values. Env-dependent settings (k8sServiceHost,
+# ipv4NativeRoutingCIDR) are passed as --set flags by the mise task.
+#
+# NOTE on public ingress: do NOT route it through cilium's BPF datapath on
+# wlan0 or gatewayAPI.hostNetwork mode. Both were tried on 2026-08-12 and
+# fail in kernels-deep ways (cilium/cilium#26584: wlan0-ingress L7 service
+# packets drop at TC; host-network Envoy listeners lose upstream reply
+# steering for either local or remote pods depending on bpf.tproxy).
+# Public ingress instead uses the edge-proxy nginx DaemonSet
+# (apps/networking) — a plain host socket on :80/:443 proxying to the
+# gateway's NodePort over the ethernet link, which uses only the
+# battle-tested service path.
+
+# Restart agent pods when config changes — without this, helm upgrades
+# only update the ConfigMap and running agents keep stale config.
+rollOutCiliumPods: true
+kubeProxyReplacement: true
+ipam:
+  mode: kubernetes
+k8s:
+  requireIPv4PodCIDR: true
+routingMode: tunnel
+tunnelProtocol: vxlan
+devices:
+  - eth0
+  - wlan0
+bpf:
+  masquerade: true
+autoDirectNodeRoutes: false
+operator:
+  replicas: 1
+  rollOutPods: true
+cni:
+  exclusive: true
+gatewayAPI:
+  enabled: true
+envoy:
+  rollOutPods: true
+l2announcements:
+  enabled: true
+k8sClientRateLimit:
+  qps: 50
+  burst: 100
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+MTU: 1450

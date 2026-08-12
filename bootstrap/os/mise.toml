@@ -1,10 +1,8 @@
 [tasks.apparmor]
 description = "Disable restrictive cri-containerd AppArmor profile"
-usage = """
-arg <node> help="Node hostname"
-"""
 run = """
-ssh {{ usage.node }} -- bash -s << EOF
+{% for node in ["node-1", "node-2"] %}
+ssh {{ node }} -- bash -s << EOF
 sudo mkdir -p /var/lib/rancher/k3s/agent/etc/containerd
 sudo tee /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl > /dev/null << 'TOML'
 version = 2
@@ -24,36 +22,47 @@ profile cri-containerd.apparmor.d flags=(unconfined) {
 PROFILE
 sudo apparmor_parser -r /etc/apparmor.d/cri-containerd.apparmor.d
 EOF
+{% endfor %}
 """
 
 [tasks.eth0]
 description = "Assign static IPs on the ethernet interface"
 run = """
-ssh node-1 bash -s << EOF
+{% for node in ["node-1", "node-2"] %}
+ssh {{ node }} bash -s << EOF
 sudo tee /etc/netplan/99-eth0-static.yaml > /dev/null << 'YAML'
 network:
   version: 2
   ethernets:
     eth0:
+      dhcp4: false
       addresses:
-        - {{ env.NODE_1_IP_ETH }}/30
+        - {{ env["NODE_" ~ loop.index ~ "_IP_ETH"] }}/30
 YAML
 sudo chmod 600 /etc/netplan/99-eth0-static.yaml
 sudo ip link set eth0 up
 sudo netplan apply
 EOF
+{% endfor %}
+"""
 
-ssh node-2 bash -s << EOF
-sudo tee /etc/netplan/99-eth0-static.yaml > /dev/null << 'YAML'
+[tasks.wifi]
+description = "Configure wifi on both nodes (SSID/password from env)"
+run = """
+{% for node in ["node-1", "node-2"] %}
+ssh {{ node }} bash -s << EOF
+sudo tee /etc/netplan/99-wifi.yaml > /dev/null << 'YAML'
 network:
   version: 2
-  ethernets:
-    eth0:
-      addresses:
-        - {{ env.NODE_2_IP_ETH }}/30
+  wifis:
+    wlan0:
+      dhcp4: true
+      access-points:
+        "{{ env.WIFI_SSID }}":
+          password: "{{ env.WIFI_PASSWORD }}"
 YAML
-sudo chmod 600 /etc/netplan/99-eth0-static.yaml
-sudo ip link set eth0 up
+sudo chmod 600 /etc/netplan/99-wifi.yaml
 sudo netplan apply
 EOF
+{% endfor %}
 """

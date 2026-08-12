@@ -15,3 +15,7 @@ cluster.
 - Record any discussion, architectural decision, troubleshooting session, or
   new concept in memory. Read and write memory frequently to preserve as much
   context as possible across sessions.
+- In mise task files, use Tera templating (`{% for %}`, `{% if %}`) for loops
+  and conditionals — e.g. loop over `["node-1", "node-2"]` with per-node env
+  lookups like `env["NODE_" ~ loop.index ~ "_IP_ETH"]` — instead of
+  duplicating task bodies or using shell loops.

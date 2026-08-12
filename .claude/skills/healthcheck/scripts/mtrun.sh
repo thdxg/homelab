@@ -19,18 +19,32 @@ CMD=$*
 
 ID=$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')
 
+# Target the project's shell pane by session name — never pane:1 blindly.
+# Users open TUIs (btop, k9s) in panes, and typing a command into one of
+# those sends it keystrokes it may act on.
+SESSION=$($MT pane list --project "$PROJECT" --json | /usr/bin/python3 -c '
+import json, sys
+for p in json.load(sys.stdin)["panes"]:
+    if p.get("process") in ("bash", "zsh", "sh", "fish", "nu"):
+        print(p["session"]); break
+')
+if [ -z "$SESSION" ]; then
+  echo "mtrun: no shell pane found in project $PROJECT (all running TUIs?)" >&2
+  exit 2
+fi
+
 # The marker is assembled at runtime by the remote printf, so the joined
 # string "MTRUN-<id>" only ever appears in real output, never in the echo
 # of the typed command line.
-$MT pane run --project "$PROJECT" --pane pane:1 "$CMD; printf 'MTRUN-%s\n' $ID" >/dev/null || exit 2
+$MT pane run --project "$PROJECT" --session "$SESSION" "$CMD; printf 'MTRUN-%s\n' $ID" >/dev/null || exit 2
 
 i=0
 while [ "$i" -lt 90 ]; do
-  if $MT pane dump --project "$PROJECT" --pane pane:1 --scrollback | grep -q "MTRUN-$ID"; then
+  if $MT pane dump --project "$PROJECT" --session "$SESSION" --scrollback | grep -q "MTRUN-$ID"; then
     # The echoed command line contains the raw id but never the joined
     # marker ("MTRUN-%s\n' <id>"); the real marker line contains the joined
     # form. Start after the echo, stop at the marker.
-    $MT pane dump --project "$PROJECT" --pane pane:1 --scrollback | awk -v id="MTRUN-$ID" -v raw="$ID" '
+    $MT pane dump --project "$PROJECT" --session "$SESSION" --scrollback | awk -v id="MTRUN-$ID" -v raw="$ID" '
       /printf/ && index($0, raw) { started = 1; next }
       index($0, id) { exit }
       started { print }'
