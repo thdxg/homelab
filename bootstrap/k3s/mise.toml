@@ -19,7 +19,7 @@ disable:
   - "traefik"
 write-kubeconfig-mode: "644"
 YAML
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server" sh -s -
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ env.K3S_VERSION }}" INSTALL_K3S_EXEC="server" sh -s -
 EOF
 """
 
@@ -35,7 +35,7 @@ token: "$TOKEN"
 node-ip: "{{ env.NODE_2_IP_ETH }}"
 YAML
 sudo chmod 600 /etc/rancher/k3s/config.yaml
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent" sh -s -
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ env.K3S_VERSION }}" INSTALL_K3S_EXEC="agent" sh -s -
 EOF
 """
 
