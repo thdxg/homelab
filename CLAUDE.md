@@ -12,3 +12,6 @@ cluster.
   via the macterm CLI (remote projects `node-1` and `node-2` for node-local
   commands) rather than plain shell/SSH, and use the `healthcheck` skill's
   `mtrun.sh` helper to run a pane command and capture its output.
+- Record any discussion, architectural decision, troubleshooting session, or
+  new concept in memory. Read and write memory frequently to preserve as much
+  context as possible across sessions.
