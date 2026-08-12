@@ -37,7 +37,7 @@ spec:
     commit:
       author:
         name: flux
-        email: flux@taehoonlee.dev
+        email: flux@thdxg.dev
     push:
       branch: main
   update:
