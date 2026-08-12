@@ -4,4 +4,4 @@ resources:
   - ./website/ks.yaml
   - ./cloudflared/ks.yaml
   - ./headlamp/ks.yaml
-  # - networking/ks.yaml
+  - ./networking/ks.yaml
