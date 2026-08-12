@@ -59,6 +59,12 @@ spec:
       labels:
         app: edge-proxy
     spec:
+      # Host network: nginx binds :80 as a plain host socket, so the
+      # router can forward WAN:80 → node:80 without port translation
+      # (the router only supports single-port forward rules). Plain host
+      # sockets are the proven-working class over wlan0.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: nginx
           image: nginx:1.27-alpine
