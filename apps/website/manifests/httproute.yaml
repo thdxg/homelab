@@ -7,7 +7,7 @@ spec:
     - name: public-gateway
       namespace: networking
   hostnames:
-    - "taehoonlee.dev"
+    - "thdxg.dev"
   rules:
     - matches:
         - path:
