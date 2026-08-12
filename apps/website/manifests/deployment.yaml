@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: website
-          image: ghcr.io/thdxg/website:20260812-142259-5b2c39d # {"$imagepolicy": "website:website"}
+          image: ghcr.io/thdxg/website:20260714-115005-c1b5888 # {"$imagepolicy": "website:website"}
           ports:
             - containerPort: 3000
