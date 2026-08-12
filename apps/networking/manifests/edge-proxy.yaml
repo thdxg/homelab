@@ -27,6 +27,10 @@ data:
       }
       server {
         listen 80;
+        listen 443 ssl;
+        http2 on;
+        ssl_certificate /etc/nginx/tls/tls.crt;
+        ssl_certificate_key /etc/nginx/tls/tls.key;
         location = /edge-healthz {
           return 200;
         }
@@ -75,6 +79,9 @@ spec:
             - name: config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+            - name: tls
+              mountPath: /etc/nginx/tls
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /edge-healthz
@@ -89,6 +96,9 @@ spec:
         - name: config
           configMap:
             name: edge-proxy-config
+        - name: tls
+          secret:
+            secretName: thdxg-dev-tls
 ---
 apiVersion: v1
 kind: Service
