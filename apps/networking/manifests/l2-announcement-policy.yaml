@@ -1,0 +1,13 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: public-gateway-l2
+spec:
+  serviceSelector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: public-gateway
+  # Announce on the LAN-facing wifi interface only — eth0 is the
+  # point-to-point inter-node link and has no other listeners.
+  interfaces:
+    - wlan0
+  loadBalancerIPs: true
