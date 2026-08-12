@@ -17,6 +17,9 @@ cilium install --version 1.19.3 \
   --set operator.replicas=1 \
   --set cni.exclusive=true \
   --set gatewayAPI.enabled=true \
+  --set gatewayAPI.hostNetwork.enabled=true \
+  --set envoy.securityContext.capabilities.keepCapNetBindService=true \
+  --set 'envoy.securityContext.capabilities.envoy={NET_ADMIN,SYS_ADMIN,NET_BIND_SERVICE}' \
   --set l2announcements.enabled=true \
   --set k8sClientRateLimit.qps=50 \
   --set k8sClientRateLimit.burst=100 \

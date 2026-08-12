@@ -3,5 +3,3 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - public-gateway.yaml
-  - lb-ip-pool.yaml
-  - l2-announcement-policy.yaml
