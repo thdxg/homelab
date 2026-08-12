@@ -1,7 +1,11 @@
 [tasks.install]
 description = "Install Cilium Gateway API CRDs"
 run = """
-kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/experimental-install.yaml
+# Pinned: cilium 1.19 is written against Gateway API v1.3. Unpinned
+# "latest" CRDs (v1.5.1 landed here) skew the operator's translation and
+# broke same-node upstream reply steering — reproduced clean on kind
+# with v1.3.0, broken on the cluster with v1.5.1.
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml
 cilium install --version 1.19.6 \
   --values values.yaml \
   --set k8sServiceHost={{ env.NODE_1_IP_ETH }} \
