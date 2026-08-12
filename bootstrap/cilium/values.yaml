@@ -26,6 +26,11 @@ devices:
   - wlan0
 bpf:
   masquerade: true
+  # BPF socket-assign TPROXY: the iptables TPROXY path fails to steer
+  # replies from same-node backend pods back to Envoy (gateway upstream
+  # 503s when the backend is local). Verified working for both local and
+  # remote backends on 1.19.6.
+  tproxy: true
 autoDirectNodeRoutes: false
 operator:
   replicas: 1
