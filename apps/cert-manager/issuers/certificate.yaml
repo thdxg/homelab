@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thdxg-dev
+  # Lives in networking: that's where the edge (and any future gateway
+  # HTTPS listener) consumes the resulting secret.
+  namespace: networking
+spec:
+  secretName: thdxg-dev-tls
+  dnsNames:
+    - "thdxg.dev"
+    - "*.thdxg.dev"
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
