@@ -1,0 +1,8 @@
+# The cilium operator only creates this at first install; declare it so
+# it survives Gateway API CRD reinstalls.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: cilium
+spec:
+  controllerName: io.cilium/gateway-controller
