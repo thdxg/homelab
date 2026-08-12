@@ -21,15 +21,17 @@ k8s:
   requireIPv4PodCIDR: true
 routingMode: tunnel
 tunnelProtocol: vxlan
+# wlan0 deliberately unmanaged: with wlan0 in devices, Envoy upstream
+# replies from same-node backend pods are never steered back to the proxy
+# (gateway alternates 200/503) — reproduced NOT happening on kind with
+# identical values, and fixed here the moment wlan0 left the list. Pod
+# egress via wifi is covered by iptables masquerade instead (BPF masq
+# only handles managed devices). After changing devices, clean stale tcx:
+# rm -rf /sys/fs/bpf/cilium/devices/wlan0 in each agent (or reboot).
 devices:
   - eth0
-  - wlan0
 bpf:
-  masquerade: true
-  # BPF socket-assign TPROXY: the iptables TPROXY path fails to steer
-  # replies from same-node backend pods back to Envoy (gateway upstream
-  # 503s when the backend is local). Verified working for both local and
-  # remote backends on 1.19.6.
+  masquerade: false
   tproxy: true
 autoDirectNodeRoutes: false
 operator:
