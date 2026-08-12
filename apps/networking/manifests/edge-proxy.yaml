@@ -31,11 +31,9 @@ data:
           return 200;
         }
         location / {
-          # Direct to the app service while the cilium Gateway L7 redirect
-          # is broken — same bypass as cloudflared's config. Swap back to
-          # cilium-gateway-public-gateway.networking.svc.cluster.local
-          # once the gateway works again.
-          proxy_pass http://website.website.svc.cluster.local:80;
+          # L7 routing happens in the cilium Gateway (fixed in 1.19.6);
+          # nginx is only the L4-ish front door the wifi path tolerates.
+          proxy_pass http://cilium-gateway-public-gateway.networking.svc.cluster.local:80;
           proxy_set_header Host $host;
           proxy_set_header X-Forwarded-For $remote_addr;
           proxy_set_header X-Forwarded-Proto $scheme;
