@@ -23,10 +23,13 @@ spec:
       existingPemFileSecret:
         name: cloudflared-cert-secret
     ingress:
+      # Point directly at the app service while the cilium Gateway's L7
+      # redirect is broken (see bootstrap/cilium/values.yaml note) — new
+      # connections to the gateway ClusterIP never reach Envoy.
       - hostname: taehoonlee.dev
-        service: http://cilium-gateway-public-gateway.networking.svc.cluster.local:80
+        service: http://website.website.svc.cluster.local:80
       - hostname: "*.taehoonlee.dev"
-        service: http://cilium-gateway-public-gateway.networking.svc.cluster.local:80
+        service: http://website.website.svc.cluster.local:80
       - service: http_status:404
     replica:
       count: 2
