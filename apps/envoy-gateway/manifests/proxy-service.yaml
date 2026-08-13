@@ -1,0 +1,16 @@
+# Stable name for the gateway's proxy pods: Envoy Gateway's auto-created
+# Service has a hash-suffixed name, which nginx can't reference reliably.
+# EG shifts privileged listener ports up by 10000 (listener :80 →
+# container :10080).
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-gateway
+spec:
+  selector:
+    gateway.envoyproxy.io/owning-gateway-namespace: networking
+    gateway.envoyproxy.io/owning-gateway-name: public-gateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: 10080
