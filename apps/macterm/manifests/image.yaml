@@ -1,0 +1,62 @@
+# Auto-update: the reflector lists tags on ghcr.io, the policy picks the newest
+# one, and the automation writes that tag back into deployment.yaml as a commit
+# on main — which the flux-system Kustomization then applies. So a push to
+# thdxg/macterm that touches website/ reaches this cluster with no manual step.
+#
+# The image is public, so no secretRef is needed to list its tags.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: website
+spec:
+  image: ghcr.io/thdxg/macterm/website
+  interval: 5m
+---
+# "Newest" here is purely lexical — alphabetical ordering over the tag strings
+# that survive filterTags. That only coincides with "most recently built"
+# because the website workflow publishes a zero-padded UTC timestamp tag
+# (20260813-142259-62701be); this pattern deliberately excludes :latest and
+# :sha-<short>, which carry no order at all. The two formats are one contract:
+# changing the tag format in thdxg/macterm's .github/workflows/website.yml
+# means changing this pattern in the same breath.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: website
+spec:
+  imageRepositoryRef:
+    name: website
+  filterTags:
+    pattern: '^\d{8}-\d{6}-[a-f0-9]+'
+    extract: "$0"
+  policy:
+    alphabetical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: website
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: flux
+        email: flux@thdxg.dev
+    push:
+      branch: main
+  update:
+    # Scoped to this app's directory so it can only ever rewrite the marker in
+    # this deployment.yaml — the portfolio's automation owns ./apps/website the
+    # same way. Two automations pushing to one branch will occasionally race;
+    # the loser's push is rejected and it simply retries on the next interval.
+    path: ./apps/macterm
+    strategy: Setters
