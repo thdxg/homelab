@@ -1,0 +1,22 @@
+# macterm.thdxg.dev needs no DNS or certificate work of its own: the wildcard
+# CNAME (*.thdxg.dev → thdxg.dev) follows the apex A record that cloudflare-ddns
+# maintains, and the gateway's HTTPS listener already serves the wildcard
+# certificate cert-manager issues for *.thdxg.dev.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: macterm-website
+spec:
+  parentRefs:
+    - name: public-gateway
+      namespace: networking
+  hostnames:
+    - "macterm.thdxg.dev"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: macterm-website
+          port: 80
