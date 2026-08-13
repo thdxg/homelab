@@ -4,4 +4,3 @@ resources:
   - namespace.yaml
   - gatewayclass.yaml
   - public-gateway.yaml
-  - edge-proxy.yaml
