@@ -3,7 +3,7 @@ kind: Gateway
 metadata:
   name: public-gateway
 spec:
-  gatewayClassName: envoy
+  gatewayClassName: cilium
   listeners:
     - name: http
       port: 80
