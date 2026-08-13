@@ -35,10 +35,11 @@ data:
           return 200;
         }
         location / {
-          # L7 hostname routing lives in Envoy Gateway (HTTPRoutes);
-          # nginx is only the plain-socket front door + TLS terminator
-          # that the wifi path requires.
-          proxy_pass http://edge-gateway.envoy-gateway-system.svc.cluster.local:80;
+          # Direct to the app service during the cilium-1.20 gateway
+          # trial (EG benched: no released EG version speaks the v1.6.1
+          # Gateway API CRDs cilium 1.20 requires). Swap to the gateway
+          # ClusterIP if the trial's determinism soak passes.
+          proxy_pass http://website.website.svc.cluster.local:80;
           proxy_set_header Host $host;
           proxy_set_header X-Forwarded-For $remote_addr;
           proxy_set_header X-Forwarded-Proto $scheme;
