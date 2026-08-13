@@ -1,0 +1,44 @@
+# Keeps the apex A record pointed at the current Comcast IP — without
+# this, an ISP address rotation silently kills the site. The wildcard
+# CNAME (*.thdxg.dev → thdxg.dev) follows the apex automatically. Lives
+# here to reuse the cloudflare-api-token secret (Zone→DNS→Edit).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-ddns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflare-ddns
+  template:
+    metadata:
+      labels:
+        app: cloudflare-ddns
+    spec:
+      containers:
+        - name: ddns
+          image: favonia/cloudflare-ddns:1
+          env:
+            - name: CLOUDFLARE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-api-token
+                  key: token
+            - name: DOMAINS
+              value: thdxg.dev
+            - name: PROXIED
+              value: "true"
+            - name: IP6_PROVIDER
+              value: none
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
