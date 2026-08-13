@@ -1,0 +1,62 @@
+# The Macterm marketing site and docs (thdxg/macterm, website/). Caddy serving
+# a directory of static files that were rendered at image build time — it reads
+# nothing, writes nothing, and terminates no TLS, so the pod needs no volumes,
+# no config, and no secrets.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: macterm-website-deployment
+  labels:
+    app: macterm-website
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: macterm-website
+  template:
+    metadata:
+      labels:
+        app: macterm-website
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: macterm-website
+      containers:
+        - name: website
+          # Updated in git by the ImageUpdateAutomation in image.yaml — the
+          # marker comment is the setter, so keep it on this line.
+          image: ghcr.io/thdxg/macterm/website:sha-62701be # {"$imagepolicy": "macterm:website"}
+          ports:
+            - containerPort: 3000
+          # /healthz is served by the image's Caddyfile ahead of any file
+          # lookup, so it answers even if the site content were missing.
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 96Mi
+          # The image already runs as uid 1000 and binds an unprivileged port,
+          # so it needs neither capabilities nor escalation. readOnlyRootFilesystem
+          # is deliberately NOT set: Caddy's own /data and /config live on the
+          # root filesystem, and whether it touches them under `admin off` +
+          # `persist_config off` has not been verified against this image. Worth
+          # tightening, but only after watching a pod come up with it on.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
