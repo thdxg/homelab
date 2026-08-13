@@ -31,7 +31,18 @@ cni:
   exclusive: true
 gatewayAPI:
   enabled: false
+# L7 proxy OFF entirely. Nothing here uses it — no CiliumEnvoyConfigs, no
+# L7/toFQDNs policies, no cilium gateway — and on 1.20.0 the agent↔envoy
+# xDS channel livelocks with it on (cilium/cilium#47624): the agent pushes
+# cilium.NetworkPolicy, envoy answers "Ignoring unwatched type URL" and
+# re-requests a version the agent never acks, spinning ~3200 times/sec and
+# burning a full core per node plus one on each envoy. Turning this off
+# removes the whole xDS machinery and the cilium-envoy DaemonSet.
+# Trade-off accepted: no L7 network policies, no DNS proxy, no Hubble L7
+# visibility. Revisit only if a fix lands upstream AND we need those.
+l7Proxy: false
 envoy:
+  enabled: false
   rollOutPods: true
 l2announcements:
   enabled: false
