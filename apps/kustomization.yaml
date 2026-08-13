@@ -4,7 +4,5 @@ resources:
   - ./website/ks.yaml
   - ./headlamp/ks.yaml
   - ./cert-manager/ks.yaml
-  # envoy-gateway benched during the cilium 1.20 gateway trial (CRD
-  # version conflict: EG ≤v1.8 wants ≤v1.5.1, cilium 1.20 wants v1.6.1)
-  # - ./envoy-gateway/ks.yaml
+  - ./envoy-gateway/ks.yaml
   - ./networking/ks.yaml

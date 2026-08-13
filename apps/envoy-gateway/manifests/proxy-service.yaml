@@ -1,12 +1,16 @@
-# Stable name for the gateway's proxy pods: Envoy Gateway's auto-created
-# Service has a hash-suffixed name, which nginx can't reference reliably.
-# EG shifts privileged listener ports up by 10000 (listener :80 →
-# container :10080).
+# The public edge: pinned NodePorts 80/443 straight to Envoy Gateway's
+# proxy pods (EG's auto-created Service has a hash-suffixed name, hence
+# this stable one). The router forwards WAN 80/443 to node-1 same-port;
+# plain L4 NodePort→pod is the one path this cluster's wifi has never
+# broken. EG shifts privileged listener ports up by 10000 (:80 → :10080,
+# :443 → :10443). Requires k3s service-node-port-range=80-32767
+# (bootstrap/k3s).
 apiVersion: v1
 kind: Service
 metadata:
   name: edge-gateway
 spec:
+  type: NodePort
   selector:
     gateway.envoyproxy.io/owning-gateway-namespace: networking
     gateway.envoyproxy.io/owning-gateway-name: public-gateway
@@ -14,3 +18,8 @@ spec:
     - name: http
       port: 80
       targetPort: 10080
+      nodePort: 80
+    - name: https
+      port: 443
+      targetPort: 10443
+      nodePort: 443

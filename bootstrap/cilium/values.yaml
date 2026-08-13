@@ -1,18 +1,15 @@
 # Cilium helm values. Env-dependent settings (k8sServiceHost,
 # ipv4NativeRoutingCIDR) are passed as --set flags by the mise task.
 #
-# NOTE on public ingress: do NOT route it through cilium's BPF datapath on
-# wlan0 or gatewayAPI.hostNetwork mode. Both were tried on 2026-08-12 and
-# fail in kernels-deep ways (cilium/cilium#26584: wlan0-ingress L7 service
-# packets drop at TC; host-network Envoy listeners lose upstream reply
-# steering for either local or remote pods depending on bpf.tproxy).
-# Public ingress instead uses the edge-proxy nginx DaemonSet
-# (apps/networking) — a plain host socket on :80/:443 proxying to the
-# gateway's NodePort over the ethernet link, which uses only the
-# battle-tested service path.
+# Cilium is CNI-only here: gatewayAPI stays OFF. Its L7 machinery is
+# unreliable on this platform (Envoy upstream replies from same-node
+# backends are lost nondeterministically — cilium/cilium#47940, plus the
+# wlan0 L7 frontend drops in #47400/#26584). L7 + TLS live in Envoy
+# Gateway (apps/envoy-gateway), whose pod-based data plane only needs
+# plain L4 — which this datapath has never failed to deliver.
 
-# Restart agent pods when config changes — without this, helm upgrades
-# only update the ConfigMap and running agents keep stale config.
+# Restart pods when config changes — without these, helm upgrades only
+# update the ConfigMap and running components keep stale config.
 rollOutCiliumPods: true
 kubeProxyReplacement: true
 ipam:
@@ -21,18 +18,11 @@ k8s:
   requireIPv4PodCIDR: true
 routingMode: tunnel
 tunnelProtocol: vxlan
-# wlan0 deliberately unmanaged: with wlan0 in devices, Envoy upstream
-# replies from same-node backend pods are never steered back to the proxy
-# (gateway alternates 200/503) — reproduced NOT happening on kind with
-# identical values, and fixed here the moment wlan0 left the list. Pod
-# egress via wifi is covered by iptables masquerade instead (BPF masq
-# only handles managed devices). After changing devices, clean stale tcx:
-# rm -rf /sys/fs/bpf/cilium/devices/wlan0 in each agent (or reboot).
 devices:
   - eth0
+  - wlan0
 bpf:
-  masquerade: false
-  tproxy: true
+  masquerade: true
 autoDirectNodeRoutes: false
 operator:
   replicas: 1
@@ -40,11 +30,11 @@ operator:
 cni:
   exclusive: true
 gatewayAPI:
-  enabled: true
+  enabled: false
 envoy:
   rollOutPods: true
 l2announcements:
-  enabled: true
+  enabled: false
 k8sClientRateLimit:
   qps: 50
   burst: 100
