@@ -22,15 +22,7 @@
 | :-: | ------------------------------------------------ | ---------------------------- |
 | <img src="https://cdn.simpleicons.org/bun" height="18"/> | **[thdxg.dev](https://thdxg.dev)** | portfolio |
 | <img src="https://headlamp.dev/img/favicon.png" height="18"/> | **[headlamp.thdxg.dev](https://headlamp.thdxg.dev)** | cluster dashboard · read-only |
-| <img src="https://cdn.simpleicons.org/cilium" height="18"/> | `mise run hubble` | network flows · local only |
-
-## Consoles
-
-|     |                                                                    |                            |
-| :-: | ------------------------------------------------------------------ | -------------------------- |
-| <img src="https://cdn.simpleicons.org/cloudflare/F38020" height="18"/> | [dash.cloudflare.com](https://dash.cloudflare.com) | DNS · proxy · TLS mode |
-| <img src="https://cdn.simpleicons.org/tailscale/242424" height="18"/> | [login.tailscale.com](https://login.tailscale.com/admin/machines) | node access |
-| <img src="https://cdn.simpleicons.org/github" height="18"/> | [thdxg/homelab](https://github.com/thdxg/homelab) | Flux syncs this repo |
+| <img src="https://cdn.simpleicons.org/cilium" height="18"/> | **[hubble.thdxg.dev](https://hubble.thdxg.dev)** | network flows · read-only |
 
 ## Path in
 
