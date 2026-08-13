@@ -57,6 +57,17 @@ spec:
           # `persist_config off` has not been verified against this image. Worth
           # tightening, but only after watching a pod come up with it on.
           securityContext:
-            allowPrivilegeEscalation: false
+            # MUST stay true: /usr/bin/caddy ships with file capabilities
+            # (cap_net_bind_service=ep), and the kernel refuses execve() of a
+            # file with capabilities when no_new_privs is set — which is
+            # exactly what allowPrivilegeEscalation: false does. With it
+            # false the container never starts:
+            #   exec /usr/bin/caddy: operation not permitted
+            # Dropping ALL keeps the bounding set empty, so the file caps
+            # grant the process nothing regardless. The real cleanup is to
+            # drop the setcap from the image build — this site binds :3000
+            # and never needs NET_BIND_SERVICE — after which this can go
+            # back to false.
+            allowPrivilegeEscalation: true
             capabilities:
               drop: ["ALL"]
