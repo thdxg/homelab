@@ -15,6 +15,13 @@ spec:
         kind: HelmRepository
         name: headlamp
   values:
+    # Read-only: the chart's default binds the SA to cluster-admin, and
+    # unsafeUseServiceAccountToken hands that SA to every visitor. The
+    # dashboard is public (httproute), so the SA gets `view` (namespaced
+    # reads, excludes Secrets) plus the cluster-scoped read supplement in
+    # rbac-read.yaml.
+    clusterRoleBinding:
+      clusterRoleName: view
     config:
       pluginsDir: /build/plugins
       unsafeUseServiceAccountToken: true
