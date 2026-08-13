@@ -48,6 +48,12 @@ kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data
 kubectl drain node-2 --ignore-daemonsets --delete-emptydir-data
 """
 
+[tasks.hubble]
+description = "Open the Hubble UI (port-forward, not publicly exposed)"
+run = """
+cilium hubble ui
+"""
+
 [tasks.sync]
 description = "Reconcile flux"
 run = """

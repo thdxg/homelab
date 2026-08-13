@@ -1,32 +1,62 @@
-# Kubernetes Homelab
+<div align="center">
 
-Two-node k3s cluster on Raspberry Pi 5s, with Cilium as CNI, kube-proxy replacement, and Gateway API implementation. Bootstrap and operations are driven by [mise](https://mise.jdx.dev/) tasks.
+# homelab
+
+**two Raspberry Pi 5s serving [thdxg.dev](https://thdxg.dev)**
+
+<img src="https://cdn.simpleicons.org/raspberrypi/A22846" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/ubuntu/E95420" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/k3s/FFC61C" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/cilium/F8C517" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/flux/5468FF" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/envoyproxy/AC6199" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/letsencrypt/003A70" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/cloudflare/F38020" height="22"/>&nbsp;&nbsp;&nbsp;
+<img src="https://cdn.simpleicons.org/tailscale/242424" height="22"/>
+
+</div>
+
+## Services
+
+|     |                                                  |                              |
+| :-: | ------------------------------------------------ | ---------------------------- |
+| <img src="https://cdn.simpleicons.org/bun" height="18"/> | **[thdxg.dev](https://thdxg.dev)** | portfolio |
+| <img src="https://headlamp.dev/img/favicon.png" height="18"/> | **[headlamp.thdxg.dev](https://headlamp.thdxg.dev)** | cluster dashboard · read-only |
+| <img src="https://cdn.simpleicons.org/cilium" height="18"/> | `mise run hubble` | network flows · local only |
+
+## Consoles
+
+|     |                                                                    |                            |
+| :-: | ------------------------------------------------------------------ | -------------------------- |
+| <img src="https://cdn.simpleicons.org/cloudflare/F38020" height="18"/> | [dash.cloudflare.com](https://dash.cloudflare.com) | DNS · proxy · TLS mode |
+| <img src="https://cdn.simpleicons.org/tailscale/242424" height="18"/> | [login.tailscale.com](https://login.tailscale.com/admin/machines) | node access |
+| <img src="https://cdn.simpleicons.org/github" height="18"/> | [thdxg/homelab](https://github.com/thdxg/homelab) | Flux syncs this repo |
+
+## Path in
+
+```
+Cloudflare (proxied, full-strict) → router 80/443 → NodePort 80/443
+  → Envoy Gateway (TLS + HTTPRoutes) → Service
+```
+
+Exposing a new app = one `HTTPRoute` in its manifests.
 
 ## Nodes
 
-| name   | role   | machine        | RAM | Disk  |
-| ------ | ------ | -------------- | --- | ----- |
-| node-1 | master | Raspberry Pi 5 | 8GB | 0.5TB |
-| node-2 | worker | Raspberry Pi 5 | 8GB | 1TB   |
+| node   | role          | disk  | wired            | wifi        |
+| ------ | ------------- | ----- | ---------------- | ----------- |
+| node-1 | control-plane | 0.5TB | 192.168.100.1/30 | 10.0.0.200  |
+| node-2 | worker        | 1TB   | 192.168.100.2/30 | 10.0.0.201  |
 
-## Software
+Pi 5 · 8GB · Ubuntu 26.04 · kernel pinned `7.0.0-1010-raspi`
 
-- **OS:** Ubuntu Server 26.04
-- **Kubernetes:** k3s v1.35.4 (Flannel, kube-proxy, servicelb, and Traefik disabled)
-- **CNI:** Cilium 1.19.3 (kube-proxy replacement, Gateway API, L2 announcements, Hubble)
-- **Networking:** Tailscale for remote access
-- **Tooling:** mise, kubectl, cilium-cli (versions pinned in [mise.toml](mise.toml))
+## Ops
 
-## Project Layout
+```bash
+mise run sync     # reconcile flux
+mise run hubble   # open hubble ui
+mise run down     # drain both nodes
+mise run up       # uncordon both nodes
+```
 
-- [`mise.toml`](mise.toml) — root mise config; declares the monorepo, pins tools (e.g. `kubectl`), and stores per-node local and Tailscale IPs as env vars.
-- [`bootstrap/`](bootstrap) — initial cluster setup: OS tweaks (AppArmor), k3s install on both nodes, kubeconfig fetch, and Cilium install.
-
-## Requirements
-
-The setup assumes:
-
-1. Two nodes running Ubuntu Server 26.04, reachable as `node-1` and `node-2`
-2. Password-less SSH access to both nodes
-3. Local and Tailscale IPs for each node set in [`mise.toml`](mise.toml)
-4. [mise](https://mise.jdx.dev/) installed on the operator machine
+From-scratch install lives in [`bootstrap/`](bootstrap) — OS, k3s, Cilium, Flux.
