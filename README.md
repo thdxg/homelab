@@ -20,18 +20,9 @@
 
 |     |                                                  |                              |
 | :-: | ------------------------------------------------ | ---------------------------- |
-| <img src="https://cdn.simpleicons.org/bun" height="18"/> | **[thdxg.dev](https://thdxg.dev)** | portfolio |
+| <img src="https://thdxg.dev/favicon.svg" height="18"/> | **[thdxg.dev](https://thdxg.dev)** | portfolio |
 | <img src="https://headlamp.dev/img/favicon.png" height="18"/> | **[headlamp.thdxg.dev](https://headlamp.thdxg.dev)** | cluster dashboard · read-only |
 | <img src="https://cdn.simpleicons.org/cilium" height="18"/> | **[hubble.thdxg.dev](https://hubble.thdxg.dev)** | network flows · read-only |
-
-## Path in
-
-```
-Cloudflare (proxied, full-strict) → router 80/443 → NodePort 80/443
-  → Envoy Gateway (TLS + HTTPRoutes) → Service
-```
-
-Exposing a new app = one `HTTPRoute` in its manifests.
 
 ## Nodes
 
@@ -46,7 +37,6 @@ Pi 5 · 8GB · Ubuntu 26.04 · kernel pinned `7.0.0-1010-raspi`
 
 ```bash
 mise run sync     # reconcile flux
-mise run hubble   # open hubble ui
 mise run down     # drain both nodes
 mise run up       # uncordon both nodes
 ```
