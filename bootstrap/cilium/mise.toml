@@ -1,10 +1,11 @@
 [tasks.install]
 description = "Install Cilium Gateway API CRDs"
 run = """
-# Pinned to the Gateway API version cilium's controller is written
-# against (1.20 → v1.6.1). Never use the unpinned "latest" URL — CRD
-# skew against the controller causes subtle datapath breakage.
-kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
+# Gateway API CRDs pinned to what Envoy Gateway (apps/envoy-gateway) is
+# compiled against — EG v1.8 → v1.5.1. Cilium's own gateway support is
+# disabled (see values.yaml). Never use the unpinned "latest" URL — CRD
+# skew against controllers causes subtle breakage.
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
 cilium install --version 1.20.0 \
   --values values.yaml \
   --set k8sServiceHost={{ env.NODE_1_IP_ETH }} \

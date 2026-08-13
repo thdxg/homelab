@@ -18,6 +18,9 @@ disable:
   - "servicelb"
   - "traefik"
 write-kubeconfig-mode: "644"
+# NodePorts 80/443 for the Envoy Gateway edge (router forwards same-port)
+kube-apiserver-arg:
+  - "service-node-port-range=80-32767"
 YAML
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ env.K3S_VERSION }}" INSTALL_K3S_EXEC="server" sh -s -
 EOF

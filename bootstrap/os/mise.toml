@@ -46,6 +46,26 @@ EOF
 {% endfor %}
 """
 
+[tasks.cilium-link]
+description = "Stop udev rewriting MACs on cilium's virtual interfaces"
+run = """
+{% for node in ["node-1", "node-2"] %}
+ssh {{ node }} bash -s << 'EOF'
+# systemd's default MACAddressPolicy=persistent races cilium's interface
+# setup (documented cilium/systemd >=245 incompatibility): udev rewrites
+# veth/vxlan MACs after the agent configures them, nondeterministically
+# breaking the datapath depending on creation order.
+sudo tee /etc/systemd/network/50-cilium-unmanaged.link > /dev/null << 'LINK'
+[Match]
+Driver=veth vxlan
+[Link]
+MACAddressPolicy=none
+LINK
+sudo udevadm control --reload
+EOF
+{% endfor %}
+"""
+
 [tasks.wifi]
 description = "Configure wifi on both nodes (SSID/password from env)"
 run = """
