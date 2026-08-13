@@ -15,12 +15,26 @@ rules:
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: ["gateway.networking.k8s.io"]
-    resources: ["gatewayclasses"]
-    verbs: ["get", "list", "watch"]
   - apiGroups: ["metrics.k8s.io"]
     resources: ["nodes", "pods"]
     verbs: ["get", "list"]
+  # CRDs are never covered by the built-in `view` role, so the operator
+  # CRs this cluster runs on need explicit reads. Wildcard *resources*
+  # is fine here because these groups hold no credential-bearing kinds —
+  # never add a wildcard for the core ("") group, which contains Secrets.
+  - apiGroups:
+      - "gateway.networking.k8s.io"
+      - "gateway.envoyproxy.io"
+      - "cilium.io"
+      - "cert-manager.io"
+      - "acme.cert-manager.io"
+      - "source.toolkit.fluxcd.io"
+      - "kustomize.toolkit.fluxcd.io"
+      - "helm.toolkit.fluxcd.io"
+      - "notification.toolkit.fluxcd.io"
+      - "image.toolkit.fluxcd.io"
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
