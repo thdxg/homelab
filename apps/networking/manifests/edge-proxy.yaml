@@ -35,12 +35,10 @@ data:
           return 200;
         }
         location / {
-          # Direct to the app service. The cilium Gateway (1.19.6) still
-          # loses Envoy upstream replies from SAME-NODE backend pods in
-          # both tproxy modes, so gateway-routed traffic 503s for ~50% of
-          # requests with spread replicas. Gateway stays deployed for
-          # debugging; swap back once local-backend steering works.
-          proxy_pass http://website.website.svc.cluster.local:80;
+          # L7 hostname routing lives in Envoy Gateway (HTTPRoutes);
+          # nginx is only the plain-socket front door + TLS terminator
+          # that the wifi path requires.
+          proxy_pass http://edge-gateway.envoy-gateway-system.svc.cluster.local:80;
           proxy_set_header Host $host;
           proxy_set_header X-Forwarded-For $remote_addr;
           proxy_set_header X-Forwarded-Proto $scheme;
