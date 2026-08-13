@@ -21,6 +21,7 @@
 |     |                                                  |                              |
 | :-: | ------------------------------------------------ | ---------------------------- |
 | <img src="https://thdxg.dev/favicon.svg" height="18"/> | **[thdxg.dev](https://thdxg.dev)** | portfolio |
+| <img src="https://macterm.thdxg.dev/assets/icon.png" height="18"/> | **[macterm.thdxg.dev](https://macterm.thdxg.dev)** | macterm site · docs |
 | <img src="https://headlamp.dev/img/favicon.png" height="18"/> | **[headlamp.thdxg.dev](https://headlamp.thdxg.dev)** | cluster dashboard · read-only |
 | <img src="https://cdn.simpleicons.org/cilium" height="18"/> | **[hubble.thdxg.dev](https://hubble.thdxg.dev)** | network flows · read-only |
 
