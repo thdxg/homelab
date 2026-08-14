@@ -21,7 +21,11 @@ spec:
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          # See apps/website/manifests/deployment.yaml: soft spreading loses to
+          # resource scoring here, and Honor keeps the hard constraint from
+          # deadlocking a drain.
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
           labelSelector:
             matchLabels:
               app: macterm-website

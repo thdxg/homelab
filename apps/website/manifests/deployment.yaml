@@ -17,7 +17,16 @@ spec:
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          # Hard, because soft does not hold: node-1 carries the k3s control
+          # plane, so NodeResourcesFit prefers the emptier node-2 by more than a
+          # soft spread penalty can overcome — this Deployment was found with
+          # both replicas there. Honor keeps the hard constraint from
+          # deadlocking a drain: it drops tainted nodes from the domain count,
+          # so a cordoned node is no longer an empty domain the evicted pod has
+          # to balance against (which would leave it Pending, the PDB refusing
+          # the second eviction, and the drain hanging until it timed out).
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
           labelSelector:
             matchLabels:
               app: website
@@ -26,11 +35,10 @@ spec:
           image: ghcr.io/thdxg/website:20260812-142259-5b2c39d # {"$imagepolicy": "website:website"}
           ports:
             - containerPort: 3000
-          # Load-bearing for the PDB in pdb.yaml, not just tidiness: with no
-          # probe a replica counts as Available the moment the container
-          # starts, so a drain could evict the second replica while the first
-          # is still booting and serve 503s through the gap. The app has no
-          # dedicated health endpoint — / is the served route and returns 200.
+          # Load-bearing for the PDB: without a probe a replica counts as
+          # Available the moment its container starts, so a drain could evict
+          # the second while the first is still booting. No /healthz in this
+          # image — / is the served route and returns 200.
           readinessProbe:
             httpGet:
               path: /

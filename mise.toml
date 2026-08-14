@@ -1,7 +1,4 @@
-experimental_monorepo_root = true
-
-[settings]
-experimental = true
+monorepo_root = true
 
 [monorepo]
 config_roots = ["bootstrap", "bootstrap/*"]
@@ -34,24 +31,109 @@ ksops = "latest"
 cloudflared = "latest"
 flux2 = "latest"
 
-[tasks.up]
-description = "Uncordon all nodes and make them schedulable"
+[tasks.reboot]
+description = "Rolling-reboot both nodes, one at a time, keeping workloads served"
+confirm = "Rolling-reboot node-2 then node-1? Public ingress (the router forwards to node-1) drops while node-1 boots."
 run = """
-kubectl uncordon node-1 node-2
-"""
+set -u
 
-[tasks.down]
-description = "Safely drain all nodes and make them unschedulable"
-run = """
-kubectl cordon node-1 node-2
-kubectl drain node-1 --ignore-daemonsets --delete-emptydir-data
-kubectl drain node-2 --ignore-daemonsets --delete-emptydir-data
-"""
+ssh_probe() { ssh -o BatchMode=yes -o ConnectTimeout=5 "$1" true > /dev/null 2>&1; }
 
-[tasks.hubble]
-description = "Open the Hubble UI (port-forward, not publicly exposed)"
-run = """
-cilium hubble ui
+# Poll until a command succeeds. $1 = seconds between tries, $2 = max tries.
+until_ok() {
+  delay=$1; attempts=$2; shift 2
+  n=1
+  while [ "$n" -le "$attempts" ]; do
+    if "$@" > /dev/null 2>&1; then return 0; fi
+    sleep "$delay"
+    n=$((n + 1))
+  done
+  echo "!! timed out after $((delay * attempts))s waiting for: $*" >&2
+  return 1
+}
+
+# The gate that makes this rolling rather than a two-node outage: the surviving
+# node has to actually be serving the evicted workloads before the next node
+# goes down. Terminal pods are filtered out — evicted leftovers never go Ready.
+wait_for_workloads() {
+  kubectl wait --for=condition=Ready pods --all --all-namespaces \
+    --field-selector=status.phase!=Succeeded,status.phase!=Failed --timeout=5m
+}
+
+# Refuse to start unless the cluster is whole. Draining onto a node that is
+# already NotReady turns a rolling reboot into a full outage.
+kubectl wait --for=condition=Ready node/node-1 node/node-2 --timeout=60s
+wait_for_workloads
+
+{% for node in ["node-2", "node-1"] %}
+# node-2 (worker) first and node-1 (control-plane, and the node the router
+# forwards 80/443 to) last, so the API server and public ingress each drop at
+# most once, at the very end.
+echo "==> {{ node }}: cordon + drain"
+kubectl cordon {{ node }}
+kubectl drain {{ node }} --ignore-daemonsets --delete-emptydir-data --timeout=5m
+wait_for_workloads
+
+echo "==> {{ node }}: reboot"
+# The connection dies with the node, so ssh's exit status here means nothing.
+ssh {{ node }} "sudo systemctl reboot" || true
+# Wait for it to actually go down before probing for it to come back — the
+# still-open pre-reboot sshd would answer and we would skip the wait entirely.
+tries=1
+while ssh_probe {{ node }}; do
+  [ "$tries" -le 30 ] || { echo "!! {{ node }} never went down" >&2; exit 1; }
+  sleep 2
+  tries=$((tries + 1))
+done
+
+echo "==> {{ node }}: waiting for it to come back"
+until_ok 5 120 ssh_probe {{ node }}
+# kubectl is dead in the water while node-1 (the only server) is rebooting.
+until_ok 5 120 kubectl get --raw /readyz
+kubectl wait --for=condition=Ready node/{{ node }} --timeout=10m
+# Datapath before workloads: uncordoning while the agent is still initializing
+# would schedule pods onto a node that cannot yet network them.
+until_ok 5 60 kubectl wait --for=condition=Ready pod -n kube-system \
+  -l k8s-app=cilium --field-selector=spec.nodeName={{ node }} --timeout=30s
+
+echo "==> {{ node }}: uncordon"
+kubectl uncordon {{ node }}
+{% endfor %}
+
+wait_for_workloads
+
+respread() {
+  kubectl rollout restart -n "$1" "deploy/$2"
+  kubectl rollout status -n "$1" "deploy/$2" --timeout=5m
+}
+
+# Discovered, not listed: every Deployment wanting more than one replica. Keeps
+# new HA apps covered, and survives EG rehashing its proxy Deployment's name.
+targets=$(kubectl get deploy -A \
+  -o jsonpath='{range .items[?(@.spec.replicas>1)]}{.metadata.namespace}/{.metadata.name}{"\\n"}{end}')
+
+echo "==> re-spreading replicas across both nodes"
+# Spread constraints steer scheduling only, and the drains above left every
+# replica on node-2; restarting is what rebalances them. Needs the constraints
+# to be DoNotSchedule + nodeTaintsPolicy: Honor — under ScheduleAnyway node-1's
+# control-plane load makes the scheduler pile both replicas back onto node-2.
+for target in $targets; do
+  respread "${target%%/*}" "${target#*/}"
+done
+
+wait_for_workloads
+kubectl get nodes
+echo "==> replica placement (want one per node)"
+for target in $targets; do
+  ns=${target%%/*}
+  name=${target#*/}
+  # raw: these are go-template braces, not Tera's.
+  sel=$(kubectl get deploy -n "$ns" "$name" -o go-template=\
+'{% raw %}{{range $k, $v := .spec.selector.matchLabels}}{{$k}}={{$v}},{{end}}{% endraw %}')
+  echo "$ns/$name"
+  kubectl get pods -n "$ns" -l "${sel%,}" \
+    -o custom-columns=POD:.metadata.name,NODE:.spec.nodeName --no-headers | sed 's/^/  /'
+done
 """
 
 [tasks.sync]
