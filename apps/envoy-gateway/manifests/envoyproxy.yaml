@@ -1,13 +1,6 @@
-# Infrastructure settings for the proxy pods Envoy Gateway generates for each
-# Gateway of class `envoy`. Attached via the GatewayClass parametersRef in
-# gatewayclass.yaml — the generated Deployment
-# (envoy-networking-public-gateway-<hash>) must never be edited directly, since
-# EG reconciles it back.
-#
-# This is the public ingress data plane: every request to *.thdxg.dev lands
-# here. At one replica, draining its node took the whole site down until it
-# rescheduled, which is what made `mise run reboot` a real outage instead of a
-# rolling one.
+# Infrastructure settings for the proxy pods EG generates per Gateway of class
+# `envoy`, attached via the GatewayClass parametersRef. Never edit the generated
+# Deployment directly — EG reconciles it back.
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
@@ -17,32 +10,30 @@ spec:
     type: Kubernetes
     kubernetes:
       envoyDeployment:
-        # One per node. Two is the ceiling on a two-node cluster — the point is
-        # that a drain always leaves one proxy serving, not horizontal scale.
+        # One per node, so a drain always leaves a proxy serving. At one replica
+        # a drain took all of *.thdxg.dev down until it rescheduled.
         replicas: 2
         pod:
           topologySpreadConstraints:
             - maxSkew: 1
               topologyKey: kubernetes.io/hostname
-              # ScheduleAnyway, not DoNotSchedule: with only two nodes, a hard
-              # constraint makes the pod evicted from node A unschedulable on
-              # node B (skew would hit 2), so it stays Pending, the PDB below
-              # refuses the eviction, and `kubectl drain` times out. Soft
-              # spreading + the PDB gives rolling behaviour; the cost is that
-              # nothing forces a re-spread once both nodes are back.
-              whenUnsatisfiable: ScheduleAnyway
+              # Hard, because soft does not hold: node-1 carries the k3s control
+              # plane, so NodeResourcesFit prefers node-2 by more than the spread
+              # plugin penalises it, and under ScheduleAnyway a rollout put both
+              # replicas on node-2. Honor is what stops a hard constraint from
+              # deadlocking a drain — it drops tainted nodes from the domain
+              # count, so a cordoned node is no longer an empty domain the
+              # evicted pod has to balance against.
+              whenUnsatisfiable: DoNotSchedule
+              nodeTaintsPolicy: Honor
               labelSelector:
                 matchLabels:
-                  # The labels EG stamps on this Gateway's proxy pods. Scoped to
-                  # public-gateway on purpose: this config is attached at the
-                  # GatewayClass level, so a second Gateway added later would
-                  # need its own EnvoyProxy rather than sharing this selector.
+                  # Scoped to this Gateway: attached at GatewayClass level, so a
+                  # second Gateway would need its own EnvoyProxy.
                   app.kubernetes.io/name: envoy
                   app.kubernetes.io/component: proxy
                   gateway.envoyproxy.io/owning-gateway-namespace: networking
                   gateway.envoyproxy.io/owning-gateway-name: public-gateway
-      # Makes `kubectl drain` evict the two proxy pods one at a time, waiting
-      # for the first to come back Ready elsewhere before taking the second —
-      # instead of removing both and dropping public ingress.
+      # Evict the proxies one at a time, waiting for Ready in between.
       envoyPDB:
         minAvailable: 1
