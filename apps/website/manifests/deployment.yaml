@@ -26,3 +26,13 @@ spec:
           image: ghcr.io/thdxg/website:20260812-142259-5b2c39d # {"$imagepolicy": "website:website"}
           ports:
             - containerPort: 3000
+          # Load-bearing for the PDB in pdb.yaml, not just tidiness: with no
+          # probe a replica counts as Available the moment the container
+          # starts, so a drain could evict the second replica while the first
+          # is still booting and serve 503s through the gap. The app has no
+          # dedicated health endpoint — / is the served route and returns 200.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            periodSeconds: 5
