@@ -4,3 +4,11 @@ metadata:
   name: envoy
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  # Proxy replica count, spread and PDB for every Gateway of this class.
+  # Namespace is spelled out because this resource is cluster-scoped, so the
+  # Flux Kustomization's targetNamespace does not reach it.
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: public-gateway-proxy
+    namespace: envoy-gateway-system

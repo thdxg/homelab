@@ -1,0 +1,12 @@
+# Same rolling-drain guarantee as the website PDB: one replica stays serving
+# while the other is evicted and rescheduled. See apps/website/manifests/pdb.yaml
+# for why minAvailable: 1 is tied to replicas: 2.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: macterm-website
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: macterm-website
