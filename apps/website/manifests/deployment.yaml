@@ -27,6 +27,12 @@ spec:
           # the second eviction, and the drain hanging until it timed out).
           whenUnsatisfiable: DoNotSchedule
           nodeTaintsPolicy: Honor
+          # Count only pods from the same ReplicaSet. Without this a rolling
+          # update ends unbalanced: the outgoing pod still occupies its node
+          # when the second new pod is placed, so doubling up looks legal,
+          # and the balance is gone once that old pod exits.
+          matchLabelKeys:
+            - pod-template-hash
           labelSelector:
             matchLabels:
               app: website
