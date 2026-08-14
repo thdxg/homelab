@@ -114,9 +114,10 @@ targets=$(kubectl get deploy -A \
 
 echo "==> re-spreading replicas across both nodes"
 # Spread constraints steer scheduling only, and the drains above left every
-# replica on node-2; restarting is what rebalances them. Needs the constraints
-# to be DoNotSchedule + nodeTaintsPolicy: Honor — under ScheduleAnyway node-1's
-# control-plane load makes the scheduler pile both replicas back onto node-2.
+# replica on node-2; restarting is what rebalances them. Only rebalances if the
+# constraints carry DoNotSchedule + nodeTaintsPolicy: Honor + matchLabelKeys —
+# see apps/website/manifests/deployment.yaml. Weaker combinations let the
+# scheduler pile both replicas straight back onto node-2.
 for target in $targets; do
   respread "${target%%/*}" "${target#*/}"
 done
