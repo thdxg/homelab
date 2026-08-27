@@ -39,7 +39,7 @@ spec:
         - name: website
           # Updated in git by the ImageUpdateAutomation in image.yaml — the
           # marker comment is the setter, so keep it on this line.
-          image: ghcr.io/thdxg/macterm/website:20260826-014506-bb1c3b2 # {"$imagepolicy": "macterm:website"}
+          image: ghcr.io/thdxg/macterm/website:20260827-191837-081e1e4 # {"$imagepolicy": "macterm:website"}
           ports:
             - containerPort: 3000
           # /healthz is served by the image's Caddyfile ahead of any file
