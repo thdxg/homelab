@@ -1,12 +1,24 @@
 [tasks.install]
-description = "Install Cilium Gateway API CRDs"
+description = "Install or upgrade Cilium and the Gateway API CRDs"
 run = """
 # Gateway API CRDs pinned to what Envoy Gateway (apps/envoy-gateway) is
-# compiled against — EG v1.8 → v1.5.1. Cilium's own gateway support is
-# disabled (see values.yaml). Never use the unpinned "latest" URL — CRD
-# skew against controllers causes subtle breakage.
+# compiled against — EG v1.8 → v1.5.1. Cilium's own gateway support is disabled
+# (see values.yaml); if it is ever re-enabled, this pin still works — cilium
+# needs v1 for GatewayClass, Gateway, HTTPRoute, GRPCRoute, TLSRoute,
+# ReferenceGrant and BackendTLSPolicy, and v1.5.1 serves v1 for all seven.
+# Never use the unpinned "latest" URL — CRD skew causes subtle breakage.
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
-cilium install --version 1.20.0 \
+
+# One body for both paths: cilium-cli rejects `install` over an existing
+# release and `upgrade` when there is nothing to upgrade.
+if helm status cilium -n kube-system > /dev/null 2>&1; then
+  verb=upgrade
+else
+  verb=install
+fi
+
+echo "==> cilium $verb"
+cilium "$verb" --version 1.20.1 \
   --values values.yaml \
   --set k8sServiceHost={{ env.NODE_1_IP_ETH }} \
   --set k8sServicePort=6443 \
