@@ -38,7 +38,7 @@ spec:
               app: buggyrace
       containers:
         - name: website
-          image: ghcr.io/thdxg/buggyrace:20260912-234143-cd3ab3e # {"$imagepolicy": "buggyrace:buggyrace"}
+          image: ghcr.io/thdxg/buggyrace:20260912-235143-2492535 # {"$imagepolicy": "buggyrace:buggyrace"}
           ports:
             - containerPort: 5173
           # Load-bearing for the PDB: without a probe a replica counts as
