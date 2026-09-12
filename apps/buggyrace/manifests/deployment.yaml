@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buggyrace-deployment
+  labels:
+    app: buggyrace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: buggyrace
+  template:
+    metadata:
+      labels:
+        app: buggyrace
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          # Hard, because soft does not hold: node-1 carries the k3s control
+          # plane, so NodeResourcesFit prefers the emptier node-2 by more than a
+          # soft spread penalty can overcome — this Deployment was found with
+          # both replicas there. Honor keeps the hard constraint from
+          # deadlocking a drain: it drops tainted nodes from the domain count,
+          # so a cordoned node is no longer an empty domain the evicted pod has
+          # to balance against (which would leave it Pending, the PDB refusing
+          # the second eviction, and the drain hanging until it timed out).
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
+          # Count only pods from the same ReplicaSet. Without this a rolling
+          # update ends unbalanced: the outgoing pod still occupies its node
+          # when the second new pod is placed, so doubling up looks legal,
+          # and the balance is gone once that old pod exits.
+          matchLabelKeys:
+            - pod-template-hash
+          labelSelector:
+            matchLabels:
+              app: buggyrace
+      containers:
+        - name: website
+          image: ghcr.io/thdxg/buggyrace:20260912-234143-cd3ab3e # {"$imagepolicy": "buggyrace:buggyrace"}
+          ports:
+            - containerPort: 5173
+          # Load-bearing for the PDB: without a probe a replica counts as
+          # Available the moment its container starts, so a drain could evict
+          # the second while the first is still booting. No /healthz in this
+          # image — / is the served route and returns 200.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5173
+            periodSeconds: 5

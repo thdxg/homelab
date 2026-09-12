@@ -1,0 +1,15 @@
+# Makes `kubectl drain` evict the two replicas one at a time rather than both
+# at once: the second eviction blocks until the first is Ready on the surviving
+# node. Slower drain, no outage.
+#
+# Tied to replicas: 2 — scaling to 1 makes every eviction a violation and hangs
+# the drain until its timeout, aborting the rolling reboot.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: buggyrace
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: buggyrace
