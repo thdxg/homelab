@@ -1,12 +1,25 @@
 # Cilium helm values. Env-dependent settings (k8sServiceHost,
 # ipv4NativeRoutingCIDR) are passed as --set flags by the mise task.
 #
-# Cilium is CNI-only here: gatewayAPI stays OFF. Its L7 machinery is
-# unreliable on this platform (Envoy upstream replies from same-node
-# backends are lost nondeterministically — cilium/cilium#47940, plus the
-# wlan0 L7 frontend drops in #47400/#26584). L7 + TLS live in Envoy
-# Gateway (apps/envoy-gateway), whose pod-based data plane only needs
-# plain L4 — which this datapath has never failed to deliver.
+# Cilium is CNI-only: gatewayAPI and l7Proxy stay OFF. L7 + TLS live in Envoy
+# Gateway (apps/envoy-gateway), whose pod-based data plane needs only plain L4.
+#
+# 2026-09-10: retested the cilium gateway on 1.20.1 and ROOT-CAUSED #47940.
+# cilium-envoy sets IP_TRANSPARENT on every upstream socket unconditionally
+# (addPrivilegedSocketOptions() is a test-only override hardcoded to true), so
+# the CILIUM_PRE_mangle rule
+#   ! -o lo -m socket --transparent ... -j MARK --set-xmark 0x200
+# matches the SYN-ACK coming back from a SAME-NODE backend, ip rule 9 sends it
+# to table 2004 (local default dev lo), and it never reaches Envoy's half-open
+# socket: SYN retransmit for ~6s, then RST. No drop counter fires.
+# Measured, 20 requests, one backend per node: as shipped 0/9 same-node vs
+# 11 failures; with that one rule deleted, 20/20 and zero failures. A plain
+# non-transparent socket on the identical 5-tuple returns 200.
+# bpf.tproxy does NOT help — it drops the TPROXY targets but leaves the
+# marking rule. No supported knob removes just that rule, so this needs an
+# upstream fix. Separately, wlan0 L7 ingress is still broken (#47400/#26584),
+# which only gatewayAPI.hostNetwork mode would sidestep.
+# DO NOT re-enable either flag without re-reading the issue thread first.
 
 # Restart pods when config changes — without these, helm upgrades only
 # update the ConfigMap and running components keep stale config.
@@ -29,17 +42,32 @@ operator:
   rollOutPods: true
 cni:
   exclusive: true
+# When enabled, this needs Gateway API CRDs serving v1 for GatewayClass,
+# Gateway, HTTPRoute, GRPCRoute, TLSRoute, ReferenceGrant and BackendTLSPolicy
+# (RequiredGVKs in operator/pkg/gateway-api/helpers/schemes.go). The v1.5.1
+# bundle pinned in mise.toml serves v1 for all seven, so no CRD bump is needed
+# and Envoy Gateway keeps the CRD version it is compiled against.
 gatewayAPI:
   enabled: false
-# L7 proxy OFF entirely. Nothing here uses it — no CiliumEnvoyConfigs, no
-# L7/toFQDNs policies, no cilium gateway — and on 1.20.0 the agent↔envoy
-# xDS channel livelocks with it on (cilium/cilium#47624): the agent pushes
-# cilium.NetworkPolicy, envoy answers "Ignoring unwatched type URL" and
-# re-requests a version the agent never acks, spinning ~3200 times/sec and
-# burning a full core per node plus one on each envoy. Turning this off
-# removes the whole xDS machinery and the cilium-envoy DaemonSet.
-# Trade-off accepted: no L7 network policies, no DNS proxy, no Hubble L7
-# visibility. Revisit only if a fix lands upstream AND we need those.
+  # Kept for when this is next flipped on: apps/networking/manifests/
+  # gatewayclass.yaml declares the GatewayClass so it survives CRD reinstalls,
+  # which makes Flux its owner. At the 'auto' default helm also tries to create
+  # and own it, and the upgrade dies on "cannot be imported into the current
+  # release".
+  gatewayClass:
+    create: false
+# L7 proxy OFF. Nothing here uses it — no CiliumEnvoyConfigs, no L7/toFQDNs
+# policies, no cilium gateway. Note 1.20.0 also livelocks the agent↔envoy xDS
+# channel (cilium/cilium#47624): when the last L7 listener drains, envoy
+# tears down its NPDS map but keeps the ADS subscription, so the agent
+# pushes cilium.NetworkPolicy forever at ~3200/sec, burning a core per node.
+# Fixed by cilium/proxy#1982 ("keep ADS policy maps alive", commit 0b027bac),
+# shipped to the v1.20 branch in cilium/cilium#47899 and present in the
+# cilium-envoy build that 1.20.1 pins (766ccfb3 — verified an ancestor;
+# 1.20.0's 7cffc778 is not) — verified fixed on this cluster 2026-09-10 by
+# draining the last L7 listener: 0 xDS spins, CPU flat. DO NOT run L7 on 1.20.0.
+# If the livelock ever reappears, envoy.xdsMode: split is immune by design —
+# each resource type gets its own stream, so dropping a watcher closes it.
 l7Proxy: false
 envoy:
   enabled: false
