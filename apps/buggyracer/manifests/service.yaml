@@ -4,7 +4,7 @@ metadata:
   name: buggyracer
 spec:
   selector:
-    app: buggyrace
+    app: buggyracer
   ports:
     - protocol: TCP
       port: 80

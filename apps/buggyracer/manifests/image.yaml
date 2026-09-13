@@ -1,7 +1,7 @@
 apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
-  name: buggyrace
+  name: buggyracer
 spec:
   image: ghcr.io/thdxg/buggyracer
   interval: 5m
@@ -9,10 +9,10 @@ spec:
 apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
-  name: buggyrace
+  name: buggyracer
 spec:
   imageRepositoryRef:
-    name: buggyrace
+    name: buggyracer
   filterTags:
     pattern: '^\d{8}-\d{6}-[a-f0-9]+'
     extract: "$0"
@@ -23,7 +23,7 @@ spec:
 apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageUpdateAutomation
 metadata:
-  name: buggyrace
+  name: buggyracer
 spec:
   interval: 5m
   sourceRef:
@@ -41,5 +41,5 @@ spec:
     push:
       branch: main
   update:
-    path: ./apps/buggyrace
+    path: ./apps/buggyracer
     strategy: Setters

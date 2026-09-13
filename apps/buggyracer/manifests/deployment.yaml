@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: buggyrace-deployment
+  name: buggyracer-deployment
   labels:
-    app: buggyrace
+    app: buggyracer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: buggyrace
+      app: buggyracer
   template:
     metadata:
       labels:
-        app: buggyrace
+        app: buggyracer
     spec:
       containers:
         - name: website
-          image: ghcr.io/thdxg/buggyracer:20260913-000415-e917275 # {"$imagepolicy": "buggyrace:buggyrace"}
+          image: ghcr.io/thdxg/buggyracer:20260913-000415-e917275 # {"$imagepolicy": "buggyracer:buggyracer"}
           ports:
             - containerPort: 8787
           # Gates endpoint membership during a rolling update: without a probe
