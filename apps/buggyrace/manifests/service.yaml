@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: buggyrace
+  name: buggyracer
 spec:
   selector:
     app: buggyrace
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 5173
+      targetPort: 8787
