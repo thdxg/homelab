@@ -7,12 +7,12 @@ spec:
     - name: public-gateway
       namespace: networking
   hostnames:
-    - "buggyrace.thdxg.dev"
+    - "buggyracer.thdxg.dev"
   rules:
     - matches:
         - path:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: buggyrace
+        - name: buggyracer
           port: 80
