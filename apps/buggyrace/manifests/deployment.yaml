@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: website
-          image: ghcr.io/thdxg/buggyrace:20260912-235754-dc661cb # {"$imagepolicy": "buggyrace:buggyrace"}
+          image: ghcr.io/thdxg/buggyracer:20260912-235754-dc661cb # {"$imagepolicy": "buggyrace:buggyrace"}
           ports:
             - containerPort: 8787
           # Gates endpoint membership during a rolling update: without a probe
