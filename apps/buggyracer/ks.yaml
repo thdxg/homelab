@@ -1,13 +1,13 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: buggyrace
+  name: buggyracer
   namespace: flux-system
 spec:
   interval: 5m
-  path: ./apps/buggyrace/manifests
+  path: ./apps/buggyracer/manifests
   prune: true
-  targetNamespace: buggyrace
+  targetNamespace: buggyracer
   sourceRef:
     kind: GitRepository
     name: flux-system

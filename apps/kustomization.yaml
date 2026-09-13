@@ -7,4 +7,4 @@ resources:
   - ./headlamp/ks.yaml
   - ./website/ks.yaml
   - ./macterm/ks.yaml
-  - ./buggyrace/ks.yaml
+  - ./buggyracer/ks.yaml
