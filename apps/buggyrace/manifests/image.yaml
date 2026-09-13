@@ -3,7 +3,7 @@ kind: ImageRepository
 metadata:
   name: buggyrace
 spec:
-  image: ghcr.io/thdxg/buggyrace
+  image: ghcr.io/thdxg/buggyracer
   interval: 5m
 ---
 apiVersion: image.toolkit.fluxcd.io/v1
