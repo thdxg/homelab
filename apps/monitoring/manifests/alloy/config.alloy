@@ -46,9 +46,24 @@ discovery.relabel "node" {
 
 prometheus.scrape "node" {
 	targets         = discovery.relabel.node.output
-	forward_to      = [prometheus.remote_write.mimir.receiver]
+	forward_to      = [prometheus.relabel.node.receiver]
 	job_name        = "node"
 	scrape_interval = "30s"
+}
+
+// The exporter runs inside the Alloy pod, so uname() reports the POD's
+// hostname and node_uname_info{nodename} comes out as "alloy-xxxxx". The
+// Kubernetes dashboards resolve their `instance` variable by matching
+// nodename against the node name, so put the real one back.
+prometheus.relabel "node" {
+	forward_to = [prometheus.remote_write.mimir.receiver]
+
+	rule {
+		source_labels = ["__name__"]
+		regex         = "node_uname_info"
+		target_label  = "nodename"
+		replacement   = sys.env("NODE_NAME")
+	}
 }
 
 // Kubelet and cAdvisor (per-container CPU and memory), scraped from this
@@ -68,6 +83,13 @@ discovery.relabel "kubelet" {
 	rule {
 		source_labels = ["__meta_kubernetes_node_name"]
 		target_label  = "instance"
+	}
+
+	// cAdvisor's container metrics carry no node label of their own; the
+	// Kubernetes dashboards join them to kube_pod_info on `node`.
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "node"
 	}
 }
 
