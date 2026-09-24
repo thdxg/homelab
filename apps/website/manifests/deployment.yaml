@@ -38,7 +38,7 @@ spec:
               app: website
       containers:
         - name: website
-          image: ghcr.io/thdxg/website:20260907-154644-881947d # {"$imagepolicy": "website:website"}
+          image: ghcr.io/thdxg/website:20260924-171003-d7c5e40 # {"$imagepolicy": "website:website"}
           ports:
             - containerPort: 3000
           # Load-bearing for the PDB: without a probe a replica counts as
