@@ -43,3 +43,11 @@ spec:
       # Evict the proxies one at a time, waiting for Ready in between.
       envoyPDB:
         minAvailable: 1
+      # EG creates a Service per Gateway and only reports the Gateway as
+      # Programmed once that Service has an address. Nothing here hands out
+      # LoadBalancer IPs (no MetalLB, L2 announcements off, k3s servicelb
+      # disabled), so the default LoadBalancer type sat Pending forever and
+      # the Gateway showed Programmed=False. The real edge is the NodePort
+      # Service in proxy-service.yaml; this one only has to exist.
+      envoyService:
+        type: ClusterIP
