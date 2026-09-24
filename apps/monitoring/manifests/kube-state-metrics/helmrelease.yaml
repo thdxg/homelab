@@ -18,6 +18,14 @@ spec:
     podAnnotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "8080"
+    # kube_<kind>_labels series are only emitted for kinds listed here. The
+    # Kubernetes Views dashboards count objects with them, so allow one cheap
+    # label per kind: one series per object, nothing more.
+    metricLabelsAllowlist:
+      - namespaces=[kubernetes.io/metadata.name]
+      - deployments=[app.kubernetes.io/name]
+      - statefulsets=[app.kubernetes.io/name]
+      - daemonsets=[app.kubernetes.io/name]
     resources:
       requests:
         cpu: 10m
