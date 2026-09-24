@@ -54,6 +54,12 @@ spec:
           memory: 512Mi
     controller:
       type: daemonset
+      # The netdev collector reads /proc/net/dev, and /proc/net is per network
+      # namespace: without this the pod only saw its own veth (reported as
+      # "eth0") and lo, never the node's eth0/wlan0. Same reason node-exporter
+      # runs with hostNetwork. Alloy's :12345 now binds on the node.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       volumes:
         extra:
           - name: host-proc
