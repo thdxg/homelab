@@ -47,6 +47,13 @@ store_gateway:
   sharding_ring:
     replication_factor: 1
 
+# One querier for one tenant: a dashboard load is ~20 panel queries, each split
+# into query_sharding_total_shards sub-queries. At the 100-request default
+# queue that was a 429 ("too many outstanding requests") on every refresh of
+# a big dashboard.
+query_scheduler:
+  max_outstanding_requests_per_tenant: 2000
+
 ruler_storage:
   backend: filesystem
   filesystem:
@@ -61,6 +68,9 @@ limits:
   # 30 days. The PVC can't be resized later, so retention is the size control.
   compactor_blocks_retention_period: 30d
   max_query_lookback: 30d
+  # 4 cores and a single querier: 16 shards (the default) only multiplies
+  # queue entries and memory per query.
+  query_sharding_total_shards: 4
   # Headroom for a two-node cluster; Mimir's defaults (150k series) are close
   # to what cAdvisor + kube-state-metrics + Envoy produce here.
   max_global_series_per_user: 300000
