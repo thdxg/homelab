@@ -8,3 +8,4 @@ resources:
   - ./website/ks.yaml
   - ./macterm/ks.yaml
   - ./buggyracer/ks.yaml
+  - ./monitoring/ks.yaml

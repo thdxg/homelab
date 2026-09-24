@@ -1,0 +1,28 @@
+# OCI wherever the publisher offers it. The Grafana chart moved to the
+# community-maintained org; the copy left under grafana/ is stale. Alloy's
+# chart is only published to the classic HTTP index, so that one stays.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: grafana-community
+spec:
+  type: oci
+  interval: 1h
+  url: oci://ghcr.io/grafana-community/helm-charts
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: grafana
+spec:
+  interval: 1h
+  url: https://grafana.github.io/helm-charts
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+spec:
+  type: oci
+  interval: 1h
+  url: oci://ghcr.io/prometheus-community/charts

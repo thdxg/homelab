@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mimir
+spec:
+  selector:
+    app.kubernetes.io/name: mimir
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    - name: grpc
+      port: 9095
+      targetPort: grpc
+---
+# Governing Service for the StatefulSet's stable pod DNS name.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mimir-headless
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: mimir
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

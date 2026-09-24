@@ -1,0 +1,68 @@
+# Mimir in monolithic mode (-target=all): distributor, ingester, querier,
+# store-gateway, compactor and ruler in one process, one tenant, blocks on the
+# pod's local-path volume. Mimir warns that the filesystem backend is for
+# development; on one node with no object storage it is the right trade-off.
+target: all
+multitenancy_enabled: false
+
+usage_stats:
+  enabled: false
+
+server:
+  http_listen_port: 8080
+  grpc_listen_port: 9095
+  log_level: info
+
+common:
+  storage:
+    backend: filesystem
+    filesystem:
+      dir: /data/blocks
+
+blocks_storage:
+  storage_prefix: blocks
+  bucket_store:
+    sync_dir: /data/tsdb-sync
+  tsdb:
+    dir: /data/tsdb
+
+compactor:
+  data_dir: /data/compactor
+  sharding_ring:
+    kvstore:
+      store: memberlist
+
+distributor:
+  ring:
+    kvstore:
+      store: memberlist
+
+ingester:
+  ring:
+    kvstore:
+      store: memberlist
+    replication_factor: 1
+
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
+
+ruler_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/rules
+
+alertmanager_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/alertmanager
+
+limits:
+  # 30 days. The PVC can't be resized later, so retention is the size control.
+  compactor_blocks_retention_period: 30d
+  max_query_lookback: 30d
+  # Headroom for a two-node cluster; Mimir's defaults (150k series) are close
+  # to what cAdvisor + kube-state-metrics + Envoy produce here.
+  max_global_series_per_user: 300000
+  ingestion_rate: 50000
+  ingestion_burst_size: 500000

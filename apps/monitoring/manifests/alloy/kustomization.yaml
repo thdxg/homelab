@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./helmrelease.yaml
+configMapGenerator:
+  - name: alloy-config
+    files:
+      - config.alloy
+    # The HelmRelease refers to this name literally, so no hash suffix.
+    options:
+      disableNameSuffixHash: true

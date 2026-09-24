@@ -1,0 +1,122 @@
+# Grafana, reachable at grafana.thdxg.dev but behind its login page. Nothing is
+# readable without signing in (the admin account, password in the
+# chart-generated `grafana` Secret); anonymous access stays off because an
+# anonymous Viewer could otherwise send any query to Mimir via /api/ds/query.
+#
+# Dashboards meant for the public are shared one at a time from the UI
+# (Share -> Share externally), which gives them a /public-dashboards/<token>
+# URL. Those pages are read-only and can only run the queries saved on the
+# dashboard. The share settings live in Grafana's database, hence the PVC.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: grafana
+      version: 13.2.5
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-community
+  values:
+    grafana.ini:
+      server:
+        domain: grafana.thdxg.dev
+        root_url: https://grafana.thdxg.dev
+      auth.anonymous:
+        enabled: false
+      public_dashboards:
+        enabled: true
+      users:
+        allow_sign_up: false
+        allow_org_create: false
+      security:
+        cookie_secure: true
+        disable_gravatar: true
+      snapshots:
+        enabled: false
+      analytics:
+        reporting_enabled: false
+        check_for_updates: false
+        check_for_plugin_updates: false
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Mimir
+            uid: mimir
+            type: prometheus
+            url: http://mimir.monitoring.svc.cluster.local:8080/prometheus
+            isDefault: true
+            editable: false
+            jsonData:
+              prometheusType: Mimir
+              timeInterval: 30s
+    # Dashboards from grafana.com, pinned by revision and downloaded at pod
+    # start. All of them pick the default data source (Mimir).
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: default
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: true
+            allowUiUpdates: false
+            options:
+              path: /var/lib/grafana/dashboards/default
+    dashboards:
+      default:
+        node-exporter-full:
+          gnetId: 1860
+          revision: 45
+        k8s-views-global:
+          gnetId: 15757
+          revision: 43
+        k8s-views-namespaces:
+          gnetId: 15758
+          revision: 46
+        k8s-views-nodes:
+          gnetId: 15759
+          revision: 40
+        k8s-views-pods:
+          gnetId: 15760
+          revision: 41
+    # Your own dashboards: a ConfigMap in this namespace labelled
+    # grafana_dashboard: "1" holding the dashboard JSON.
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        resource: configmap
+        provider:
+          allowUiUpdates: false
+          disableDelete: true
+    # The sidecar only needs to watch ConfigMaps here; the chart default is
+    # a ClusterRole reading every ConfigMap and Secret in the cluster.
+    rbac:
+      namespaced: true
+    # The database holds the shared-dashboard tokens (and anything the admin
+    # builds in the UI). Data sources and the stock dashboards are still
+    # provisioned from this repo, so the volume is small.
+    persistence:
+      enabled: true
+      storageClassName: local-path
+      size: 2Gi
+    # A ReadWriteOnce volume can't be mounted by the old and new pod at once.
+    deploymentStrategy:
+      type: Recreate
+    nodeSelector:
+      kubernetes.io/hostname: node-2
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3000"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 384Mi

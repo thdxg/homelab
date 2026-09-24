@@ -1,0 +1,92 @@
+# No chart: the only official one (mimir-distributed) deploys Mimir as
+# microservices plus object storage. Monolithic mode is one container.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mimir
+  labels:
+    app.kubernetes.io/name: mimir
+spec:
+  replicas: 1
+  serviceName: mimir-headless
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mimir
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mimir
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      # node-1 already carries the control plane and the public ingress.
+      nodeSelector:
+        kubernetes.io/hostname: node-2
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      # Lets the ingester flush its head block to disk before exiting.
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: mimir
+          image: docker.io/grafana/mimir:3.2.0
+          args:
+            - -config.file=/etc/mimir/mimir.yaml
+          # Several components default to paths relative to the working
+          # directory (./metrics-activity.log, ./data-ruler/,
+          # ./data-alertmanager/). With a read-only root filesystem those must
+          # resolve onto the volume.
+          workingDir: /data
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 9095
+            - name: memberlist
+              containerPort: 7946
+          env:
+            # ~85% of the memory limit: the GC works harder as the heap nears
+            # it, instead of the kernel OOM-killing the pod. Keep in step
+            # with limits.memory below.
+            - name: GOMEMLIMIT
+              value: 1300MiB
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1536Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/mimir
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: config
+          configMap:
+            name: mimir-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 20Gi
