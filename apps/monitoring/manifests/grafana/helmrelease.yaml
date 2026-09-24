@@ -114,9 +114,11 @@ spec:
     podAnnotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "3000"
+    # Grafana sits around 250Mi once started, and a 384Mi limit got it
+    # OOM-killed on a login + Explore, so the limit leaves plenty of headroom.
     resources:
       requests:
         cpu: 50m
-        memory: 128Mi
+        memory: 256Mi
       limits:
-        memory: 384Mi
+        memory: 1Gi

@@ -3,3 +3,15 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./httproute.yaml
+# Our own dashboards. The chart's sidecar loads every ConfigMap in this
+# namespace labelled grafana_dashboard, read-only in the UI (allowUiUpdates is
+# off), so editing means changing the JSON here.
+configMapGenerator:
+  - name: grafana-dashboards-homelab
+    files:
+      - dashboards/sites-traffic.json
+      - dashboards/overview.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true

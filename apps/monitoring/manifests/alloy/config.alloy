@@ -174,4 +174,9 @@ prometheus.scrape "annotated_pods" {
 	targets         = discovery.relabel.annotated_pods.output
 	forward_to      = [prometheus.remote_write.mimir.receiver]
 	scrape_interval = "30s"
+	// kube-state-metrics describes OTHER pods, so its samples carry their own
+	// namespace/pod/node labels. Without this the target labels set above win
+	// and the real ones get renamed to exported_namespace etc., which breaks
+	// every kube_* query. Targets that expose no such labels are unaffected.
+	honor_labels = true
 }
