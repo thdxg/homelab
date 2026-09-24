@@ -1,0 +1,177 @@
+// Runs on every node (DaemonSet). Each instance only discovers what lives on
+// its own node (NODE_NAME comes from the downward API), so nothing is
+// collected twice and Alloy clustering isn't needed.
+
+prometheus.remote_write "mimir" {
+	endpoint {
+		url = "http://mimir.monitoring.svc.cluster.local:8080/api/v1/push"
+	}
+
+	external_labels = {
+		cluster = "homelab",
+	}
+}
+
+// Alloy's own metrics.
+prometheus.exporter.self "alloy" { }
+
+prometheus.scrape "alloy" {
+	targets         = prometheus.exporter.self.alloy.targets
+	forward_to      = [prometheus.remote_write.mimir.receiver]
+	job_name        = "alloy"
+	scrape_interval = "30s"
+}
+
+// Node metrics, the same set node-exporter gives you, read from the host's
+// /proc, /sys and / mounted into the pod under /host.
+prometheus.exporter.unix "node" {
+	procfs_path = "/host/proc"
+	sysfs_path  = "/host/sys"
+	rootfs_path = "/host/root"
+
+	filesystem {
+		mount_points_exclude = "^/(dev|proc|run|sys|var/lib/kubelet/.+|var/lib/rancher/.+)($|/)"
+		fs_types_exclude     = "^(overlay|tmpfs|squashfs|nsfs|proc|sysfs|cgroup2?|bpf|tracefs|debugfs|securityfs|fusectl|configfs|ramfs|autofs)$"
+	}
+}
+
+discovery.relabel "node" {
+	targets = prometheus.exporter.unix.node.targets
+
+	rule {
+		target_label = "instance"
+		replacement  = sys.env("NODE_NAME")
+	}
+}
+
+prometheus.scrape "node" {
+	targets         = discovery.relabel.node.output
+	forward_to      = [prometheus.remote_write.mimir.receiver]
+	job_name        = "node"
+	scrape_interval = "30s"
+}
+
+// Kubelet and cAdvisor (per-container CPU and memory), scraped from this
+// node's kubelet on :10250. Needs the nodes/metrics RBAC rule.
+discovery.kubernetes "node" {
+	role = "node"
+
+	selectors {
+		role  = "node"
+		field = "metadata.name=" + sys.env("NODE_NAME")
+	}
+}
+
+discovery.relabel "kubelet" {
+	targets = discovery.kubernetes.node.targets
+
+	rule {
+		source_labels = ["__meta_kubernetes_node_name"]
+		target_label  = "instance"
+	}
+}
+
+prometheus.scrape "kubelet" {
+	targets           = discovery.relabel.kubelet.output
+	forward_to        = [prometheus.remote_write.mimir.receiver]
+	job_name          = "kubelet"
+	scheme            = "https"
+	scrape_interval   = "30s"
+	bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+	// k3s kubelets serve a self-signed certificate.
+	tls_config {
+		insecure_skip_verify = true
+	}
+}
+
+prometheus.scrape "cadvisor" {
+	targets           = discovery.relabel.kubelet.output
+	forward_to        = [prometheus.remote_write.mimir.receiver]
+	job_name          = "cadvisor"
+	metrics_path      = "/metrics/cadvisor"
+	scheme            = "https"
+	scrape_interval   = "30s"
+	bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+	tls_config {
+		insecure_skip_verify = true
+	}
+}
+
+// Every pod on this node annotated prometheus.io/scrape: "true". Flux,
+// cert-manager, Envoy and cilium-operator already are, and the monitoring
+// components are annotated in their own manifests.
+discovery.kubernetes "pods" {
+	role = "pod"
+
+	selectors {
+		role  = "pod"
+		field = "spec.nodeName=" + sys.env("NODE_NAME")
+	}
+}
+
+// Pod discovery emits one target per container port. After the address
+// rewrite below they all have identical labels, and the scrape pool drops the
+// duplicates, so each pod is scraped once.
+discovery.relabel "annotated_pods" {
+	targets = discovery.kubernetes.pods.targets
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_scrape"]
+		regex         = "true"
+		action        = "keep"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_phase"]
+		regex         = "Running"
+		action        = "keep"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_ip", "__meta_kubernetes_pod_annotation_prometheus_io_port"]
+		regex         = "(.+);(\\d+)"
+		replacement   = "$1:$2"
+		target_label  = "__address__"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_path"]
+		regex         = "(.+)"
+		target_label  = "__metrics_path__"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_namespace"]
+		target_label  = "namespace"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_name"]
+		target_label  = "pod"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_node_name"]
+		target_label  = "node"
+	}
+
+	// job = the app's name: app.kubernetes.io/name if set, else the app label.
+	rule {
+		source_labels = ["__meta_kubernetes_pod_label_app"]
+		target_label  = "job"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+		regex         = "(.+)"
+		target_label  = "job"
+	}
+}
+
+prometheus.scrape "annotated_pods" {
+	targets         = discovery.relabel.annotated_pods.output
+	forward_to      = [prometheus.remote_write.mimir.receiver]
+	scrape_interval = "30s"
+}
