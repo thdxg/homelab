@@ -23,23 +23,25 @@
 | <img src="https://thdxg.dev/favicon.svg" height="18"/> | **[thdxg.dev](https://thdxg.dev)** | portfolio |
 | <img src="https://macterm.thdxg.dev/assets/icons/icon.png" height="18"/> | **[macterm.thdxg.dev](https://macterm.thdxg.dev)** | macterm site · docs |
 | <img src="https://headlamp.dev/img/favicon.png" height="18"/> | **[headlamp.thdxg.dev](https://headlamp.thdxg.dev)** | cluster dashboard · read-only |
-| <img src="https://cdn.simpleicons.org/cilium" height="18"/> | **[hubble.thdxg.dev](https://hubble.thdxg.dev)** | network flows · read-only |
+| <img src="https://cdn.simpleicons.org/grafana" height="18"/> | **[grafana.thdxg.dev](https://grafana.thdxg.dev)** | metrics dashboards · login, shared dashboards public |
 
 ## Nodes
 
 | node   | role          | disk  | wired            | wifi        |
 | ------ | ------------- | ----- | ---------------- | ----------- |
 | node-1 | control-plane | 0.5TB | 192.168.100.1/30 | 10.0.0.200  |
-| node-2 | worker        | 1TB   | 192.168.100.2/30 | 10.0.0.201  |
+| node-2 | worker        | 0.5TB | 192.168.100.2/30 | 10.0.0.201  |
 
 Pi 5 · 8GB · Ubuntu 26.04 · kernel pinned `7.0.0-1010-raspi`
 
 ## Ops
 
 ```bash
-mise run sync     # reconcile flux
-mise run down     # drain both nodes
-mise run up       # uncordon both nodes
+mise run sync     # reconcile flux from git
+mise run reboot   # rolling reboot, node-2 then node-1, workloads kept served
 ```
+
+Ingress path and TLS are described in [`apps/networking/`](apps/networking).
+Monitoring (Mimir, Alloy, Grafana) lives in [`apps/monitoring/`](apps/monitoring).
 
 From-scratch install lives in [`bootstrap/`](bootstrap) — OS, k3s, Cilium, Flux.
