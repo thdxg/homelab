@@ -33,7 +33,7 @@ spec:
               app: macterm-website
       containers:
         - name: website
-          image: ghcr.io/thdxg/macterm/website:20260928-034342-b04597d # {"$imagepolicy": "macterm:website"}
+          image: ghcr.io/thdxg/macterm/website:20260928-034606-c137ca1 # {"$imagepolicy": "macterm:website"}
           ports:
             - containerPort: 3000
           readinessProbe:
