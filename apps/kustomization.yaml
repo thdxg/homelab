@@ -5,7 +5,8 @@ resources:
   - ./envoy-gateway/ks.yaml
   - ./networking/ks.yaml
   - ./headlamp/ks.yaml
+  - ./monitoring/ks.yaml
   - ./website/ks.yaml
   - ./macterm/ks.yaml
   - ./buggyracer/ks.yaml
-  - ./monitoring/ks.yaml
+  - ./eyesclosed/ks.yaml
