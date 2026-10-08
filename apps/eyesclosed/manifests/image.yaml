@@ -1,0 +1,45 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: eyesclosed
+spec:
+  image: ghcr.io/thdxg/eyesclosed
+  interval: 5m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: eyesclosed
+spec:
+  imageRepositoryRef:
+    name: eyesclosed
+  filterTags:
+    pattern: '^\d{8}-\d{6}-[a-f0-9]+'
+    extract: "$0"
+  policy:
+    alphabetical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: eyesclosed
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: flux
+        email: flux@thdxg.dev
+    push:
+      branch: main
+  update:
+    path: ./apps/eyesclosed
+    strategy: Setters

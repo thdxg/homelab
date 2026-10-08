@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eyesclosed-deployment
+  labels:
+    app: eyesclosed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eyesclosed
+  template:
+    metadata:
+      labels:
+        app: eyesclosed
+    spec:
+      containers:
+        - name: website
+          image: ghcr.io/thdxg/eyesclosed:20261008-024338-ed16744 # {"$imagepolicy": "eyesclosed:eyesclosed"}
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 5
