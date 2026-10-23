@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: website
-          image: ghcr.io/thdxg/eyesclosed:20261009-170554-2ad8c70 # {"$imagepolicy": "eyesclosed:eyesclosed"}
+          image: ghcr.io/thdxg/eyesclosed:20261023-005708-21e630b # {"$imagepolicy": "eyesclosed:eyesclosed"}
           ports:
             - containerPort: 80
           readinessProbe:
