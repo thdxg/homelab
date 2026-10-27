@@ -1,8 +1,8 @@
 <div align="center">
 
-# homelab
+# Homelab
 
-**two Raspberry Pi 5s serving [thdxg.dev](https://thdxg.dev)**
+**Two Raspberry Pi 5s serving [thdxg.dev](https://thdxg.dev)**
 
 <img src="https://cdn.simpleicons.org/raspberrypi/A22846" height="22"/>&nbsp;&nbsp;&nbsp;
 <img src="https://cdn.simpleicons.org/ubuntu/E95420" height="22"/>&nbsp;&nbsp;&nbsp;
@@ -21,9 +21,10 @@
 |     |                                                  |                              |
 | :-: | ------------------------------------------------ | ---------------------------- |
 | <img src="https://thdxg.dev/favicon.svg" height="18"/> | **[thdxg.dev](https://thdxg.dev)** | portfolio |
-| <img src="https://macterm.thdxg.dev/assets/icons/icon.png" height="18"/> | **[macterm.thdxg.dev](https://macterm.thdxg.dev)** | macterm site · docs |
-| <img src="https://headlamp.dev/img/favicon.png" height="18"/> | **[headlamp.thdxg.dev](https://headlamp.thdxg.dev)** | cluster dashboard · read-only |
-| <img src="https://cdn.simpleicons.org/grafana" height="18"/> | **[grafana.thdxg.dev](https://grafana.thdxg.dev)** | metrics dashboards · login, shared dashboards public |
+| <img src="https://macterm.thdxg.dev/assets/icons/icon.png" height="18"/> | **[macterm.thdxg.dev](https://macterm.thdxg.dev)** | Macterm site |
+| <img src="https://headlamp.dev/img/favicon.png" height="18"/> | **[headlamp.thdxg.dev](https://headlamp.thdxg.dev)** | Headlamp dashboard |
+| <img src="https://cdn.simpleicons.org/grafana" height="18"/> | **[grafana.thdxg.dev](https://grafana.thdxg.dev)** | Grafana dashboard |
+| - | **[buggyracer.thdxg.dev](https://buggyracer.thdxg.dev)** | Buggyracer project from HackCMU 2026 |
 
 ## Nodes
 
