@@ -3,7 +3,7 @@ kind: ImageRepository
 metadata:
   name: eyesclosed
 spec:
-  image: ghcr.io/thdxg/eyesclosed
+  image: ghcr.io/thdxg/eyesclosed/website
   interval: 5m
 ---
 apiVersion: image.toolkit.fluxcd.io/v1
