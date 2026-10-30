@@ -1,8 +1,8 @@
 # Cilium-served public edge (gatewayAPI.hostNetwork in bootstrap/cilium):
 # cilium-envoy binds these listener ports on 0.0.0.0 on every node, so the
-# router's same-port forward reaches them directly. Bound on 80/443 beside
-# the Envoy Gateway `public-gateway`; traffic reaches these sockets once the
-# edge-gateway NodePort Service (whose BPF frontends shadow them) is removed.
+# router's same-port forward reaches them directly. Replaced the Envoy Gateway
+# `public-gateway` (apps/envoy-gateway, removed 2026-10-30); no NodePort
+# Service may claim 80/443 on the nodes, its BPF frontends would shadow these.
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:

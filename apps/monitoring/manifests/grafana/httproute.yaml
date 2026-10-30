@@ -4,10 +4,6 @@ metadata:
   name: grafana
 spec:
   parentRefs:
-    - name: public-gateway
-      namespace: networking
-    # Cilium-served edge (migration from Envoy Gateway); the envoy controller
-    # ignores this parent and cilium ignores the one above.
     - name: public-gateway-cilium
       namespace: networking
   hostnames:
