@@ -1,36 +1,27 @@
 # Cilium helm values. Env-dependent settings (k8sServiceHost,
 # ipv4NativeRoutingCIDR) are passed as --set flags by the mise task.
 #
-# Cilium is CNI-only: gatewayAPI and l7Proxy stay OFF. L7 + TLS live in Envoy
-# Gateway (apps/envoy-gateway), whose pod-based data plane needs only plain L4.
+# Cilium serves the public edge: gatewayAPI + l7Proxy + the cilium-envoy
+# DaemonSet are ON, in hostNetwork mode, so cilium-envoy binds the public
+# Gateway's listener ports (80/443) directly on every node and the router's
+# same-port forward to node-1 (failover: node-2) lands on it. Replaced Envoy
+# Gateway (apps/envoy-gateway) in Oct/Nov 2026 — see apps/networking/README.md.
 #
-# 2026-09-10 / 2026-10-30: #47940 is ROOT-CAUSED and WORKED AROUND (see
-# bootstrap/os `cilium-accept-local`). cilium-envoy sets IP_TRANSPARENT on
-# every upstream socket, so the CILIUM_PRE_mangle rule
-#   ! -o lo -m socket --transparent ... -j MARK --set-xmark 0x200
-# marks the SYN-ACK coming back from a SAME-NODE backend. That mark alone is
-# harmless, but Tailscale (>=1.98, netfilter-mode=on) sets
-# net.ipv4.conf.all.src_valid_mark=1 globally, so the kernel's reverse-path
-# source check includes the mark, resolves it via ip rule 9 -> table 2004
-# (local default dev lo) as RTN_LOCAL, and with accept_local=0 on the pod veth
-# drops the packet as IP_LOCAL_SOURCE in ip_rcv_finish_core. No cilium drop
-# counter fires. Same bug as cilium/cilium#47591 and #48706.
-# Measured 2026-10-30, 20 requests per node, one backend per node:
-#   lxc*.accept_local=0 -> same-node 0, remote 10, fail 10 (both nodes)
-#   lxc*.accept_local=1 -> same-node 10/9, remote 10/11, fail 0
-#   back to 0 -> fails again. The drop-in persists via sysctl.d + udev.
-# No upstream fix yet (cilium PR #48928 closed on process grounds, Tailscale
-# PR #19860 still a draft).
-# The "wlan0 L7 ingress is broken" symptom was the SAME bug on the ingress
-# device (cilium/cilium#46260): the external SYN to a transparent cilium-envoy
-# listener gets mark 0x200 and the client source is martian-dropped on
-# wlan0/eth0 (kernel log: "martian source ... dev=wlan0"). With accept_local=1
-# on wlan0+eth0 as well, both the L7LB NodePort path and
-# gatewayAPI.hostNetwork went 0/20 -> 20/20 over wlan0 and eth0 (2026-10-30).
-# Both flags stay OFF because Envoy Gateway is the serving path, not because
-# the cilium gateway is broken any more. Trial config: gatewayAPI.enabled +
-# l7Proxy + envoy.enabled true (+ gatewayAPI.hostNetwork.enabled to bind
-# listener ports on the host), with `os:cilium-accept-local` applied first.
+# HARD PREREQUISITE: `mise run "//bootstrap/os:cilium-accept-local"` on every
+# node BEFORE enabling any of this. Tailscale (>=1.98, netfilter-mode=on) sets
+# net.ipv4.conf.all.src_valid_mark=1 globally; cilium marks proxy traffic 0x200
+# and routes that mark to table 2004 (local default dev lo); with the mark in
+# the reverse-path lookup the kernel classifies the peer as RTN_LOCAL and
+# martian-drops it on any device with accept_local=0 — same-node backend
+# replies on lxc* (cilium/cilium#47940, #48706) and external clients on
+# wlan0/eth0 (#46260). No cilium drop counter fires; `log_martians=1` shows
+# it. Measured 2026-10-30, 20 requests/node: 0/20 without the drop-in, 20/20
+# with it, in both gateway modes. No upstream fix yet (cilium PR #48928 closed
+# on process grounds, Tailscale PR #19860 a draft).
+#
+# Every `cilium:install` run restarts cilium-envoy (envoy.rollOutPods) and so
+# blips the HTTP edge for ~1 min, not just the datapath — batch values changes.
+# cilium-cli `upgrade` REUSES release values: spell every flag out here.
 
 # Restart pods when config changes — without these, helm upgrades only
 # update the ConfigMap and running components keep stale config.
@@ -60,34 +51,49 @@ cni:
 # bundle pinned in mise.toml serves v1 for all seven, so no CRD bump is needed
 # and Envoy Gateway keeps the CRD version it is compiled against.
 gatewayAPI:
-  enabled: false
-  # Spelled out because cilium-cli upgrade reuses release values: the
-  # 2026-10-30 hostNetwork trial left this true in the release otherwise.
+  enabled: true
+  # Advertise h2 via ALPN on the HTTPS listener (Cloudflare -> origin hop).
+  enableAlpn: true
+  # Listener ports are bound on the host (0.0.0.0) by cilium-envoy instead of
+  # going through a LoadBalancer/NodePort Service, which could not pin 80/443.
   hostNetwork:
-    enabled: false
-  # Kept for when this is next flipped on: apps/networking/manifests/
-  # gatewayclass.yaml declares the GatewayClass so it survives CRD reinstalls,
-  # which makes Flux its owner. At the 'auto' default helm also tries to create
-  # and own it, and the upgrade dies on "cannot be imported into the current
-  # release".
+    enabled: true
+  # apps/networking/manifests/gatewayclass.yaml declares the GatewayClass so it
+  # survives CRD reinstalls, which makes Flux its owner. At the 'auto' default
+  # helm also tries to create and own it, and the upgrade dies on "cannot be
+  # imported into the current release".
   gatewayClass:
     create: false
-# L7 proxy OFF. Nothing here uses it — no CiliumEnvoyConfigs, no L7/toFQDNs
-# policies, no cilium gateway. Note 1.20.0 also livelocks the agent↔envoy xDS
-# channel (cilium/cilium#47624): when the last L7 listener drains, envoy
-# tears down its NPDS map but keeps the ADS subscription, so the agent
-# pushes cilium.NetworkPolicy forever at ~3200/sec, burning a core per node.
-# Fixed by cilium/proxy#1982 ("keep ADS policy maps alive", commit 0b027bac),
-# shipped to the v1.20 branch in cilium/cilium#47899 and present in the
-# cilium-envoy build that 1.20.1 pins (766ccfb3 — verified an ancestor;
-# 1.20.0's 7cffc778 is not) — verified fixed on this cluster 2026-09-10 by
-# draining the last L7 listener: 0 xDS spins, CPU flat. DO NOT run L7 on 1.20.0.
-# If the livelock ever reappears, envoy.xdsMode: split is immune by design —
-# each resource type gets its own stream, so dropping a watcher closes it.
-l7Proxy: false
+nodePort:
+  # Cilium's cgroup post_bind hook refuses host sockets on ports that are live
+  # NodePort frontends. Disabled for the Envoy Gateway -> cilium migration, when
+  # cilium-envoy must bind 80/443 while the old edge-gateway NodePort Service
+  # still exists (a NACKed listener is not retried). Re-enable (true) at the
+  # next routine upgrade once nothing else uses NodePorts 80/443.
+  bindProtection: false
+# L7 proxy ON for the gateway. 1.20.0 livelocked the agent<->envoy xDS channel
+# (cilium/cilium#47624) when the last L7 listener drained; fixed by
+# cilium/proxy#1982 in the cilium-envoy build 1.20.1 pins (verified here
+# 2026-09-10). DO NOT run L7 on 1.20.0. If it ever reappears, envoy.xdsMode:
+# split is immune by design (one stream per resource type).
+l7Proxy: true
 envoy:
-  enabled: false
+  enabled: true
   rollOutPods: true
+  # cilium-envoy pods carry no prometheus.io annotations by default; these put
+  # them on Alloy's annotated_pods scrape job (job label = cilium-envoy).
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9964"
+  securityContext:
+    capabilities:
+      # Chart default list + NET_BIND_SERVICE, and keep it past the starter's
+      # capability drop, so Envoy can bind 80/443 on the host.
+      keepCapNetBindService: true
+      envoy:
+        - NET_ADMIN
+        - SYS_ADMIN
+        - NET_BIND_SERVICE
 l2announcements:
   enabled: false
 k8sClientRateLimit:
