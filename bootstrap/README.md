@@ -29,7 +29,8 @@ runs the connectivity test. `os:wifi`, `os:cilium-link` and
 `os:cilium-accept-local` are one-off fixes that are not part of `all`; the
 last one is required before Cilium's L7 proxy or Gateway API is ever enabled,
 because Tailscale's global `src_valid_mark=1` otherwise makes the kernel drop
-same-node proxy replies (cilium/cilium#47940, #48706).
+same-node proxy replies on the pod veths and external clients on wlan0/eth0
+(cilium/cilium#47940, #48706, #46260).
 
 ## Inputs
 

@@ -20,11 +20,17 @@
 #   lxc*.accept_local=1 -> same-node 10/9, remote 10/11, fail 0
 #   back to 0 -> fails again. The drop-in persists via sysctl.d + udev.
 # No upstream fix yet (cilium PR #48928 closed on process grounds, Tailscale
-# PR #19860 still a draft). Separately, wlan0 L7 ingress is still broken
-# (#47400/#26584), which only gatewayAPI.hostNetwork mode would sidestep.
+# PR #19860 still a draft).
+# The "wlan0 L7 ingress is broken" symptom was the SAME bug on the ingress
+# device (cilium/cilium#46260): the external SYN to a transparent cilium-envoy
+# listener gets mark 0x200 and the client source is martian-dropped on
+# wlan0/eth0 (kernel log: "martian source ... dev=wlan0"). With accept_local=1
+# on wlan0+eth0 as well, both the L7LB NodePort path and
+# gatewayAPI.hostNetwork went 0/20 -> 20/20 over wlan0 and eth0 (2026-10-30).
 # Both flags stay OFF because Envoy Gateway is the serving path, not because
-# the cilium gateway is broken any more; the trial config is gatewayAPI.enabled
-# + l7Proxy + envoy.enabled all true, with the drop-in applied first.
+# the cilium gateway is broken any more. Trial config: gatewayAPI.enabled +
+# l7Proxy + envoy.enabled true (+ gatewayAPI.hostNetwork.enabled to bind
+# listener ports on the host), with `os:cilium-accept-local` applied first.
 
 # Restart pods when config changes — without these, helm upgrades only
 # update the ConfigMap and running components keep stale config.
@@ -41,6 +47,7 @@ devices:
   - wlan0
 bpf:
   masquerade: true
+  tproxy: false
 autoDirectNodeRoutes: false
 operator:
   replicas: 1
@@ -54,6 +61,10 @@ cni:
 # and Envoy Gateway keeps the CRD version it is compiled against.
 gatewayAPI:
   enabled: false
+  # Spelled out because cilium-cli upgrade reuses release values: the
+  # 2026-10-30 hostNetwork trial left this true in the release otherwise.
+  hostNetwork:
+    enabled: false
   # Kept for when this is next flipped on: apps/networking/manifests/
   # gatewayclass.yaml declares the GatewayClass so it survives CRD reinstalls,
   # which makes Flux its owner. At the 'auto' default helm also tries to create

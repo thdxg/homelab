@@ -88,7 +88,7 @@ EOF
 """
 
 [tasks.cilium-accept-local]
-description = "Let same-node proxy replies through the kernel source check (Tailscale sets src_valid_mark=1)"
+description = "Let cilium proxy traffic through the kernel source check (Tailscale sets src_valid_mark=1)"
 run = """
 {% for node in ["node-1", "node-2"] %}
 ssh {{ node }} bash -s << 'EOF'
@@ -108,10 +108,19 @@ sudo tee /etc/sysctl.d/90-cilium-accept-local.conf > /dev/null << 'CONF'
 # mark then makes same-node proxy replies look local (cilium/cilium#48706).
 # Spoofing protection for pod traffic is enforced in BPF, not by this check.
 -net.ipv4.conf.lxc*.accept_local = 1
+# The same check also martian-drops EXTERNAL clients of a cilium-envoy
+# listener (L7LB NodePort or gatewayAPI.hostNetwork) on the ingress device:
+# the listener socket is transparent, the SYN gets mark 0x200, and the client
+# source then resolves RTN_LOCAL (cilium/cilium#46260). Verified 2026-10-30:
+# 0/20 without, 20/20 with, on both devices and both gateway modes. Trade-off
+# accepted 2026-10-30: the host accepts packets whose source is one of its own
+# addresses on these NICs; rp_filter stays at its loose default (2).
+net.ipv4.conf.wlan0.accept_local = 1
+net.ipv4.conf.eth0.accept_local = 1
 CONF
 # Apply to veths that already exist; new ones get it from udev.
 sudo /usr/lib/systemd/systemd-sysctl /etc/sysctl.d/90-cilium-accept-local.conf
-for d in /proc/sys/net/ipv4/conf/lxc*; do
+for d in /proc/sys/net/ipv4/conf/lxc* /proc/sys/net/ipv4/conf/wlan0 /proc/sys/net/ipv4/conf/eth0; do
   echo "$(hostname) $(basename "$d") accept_local=$(cat "$d/accept_local")"
 done
 EOF
