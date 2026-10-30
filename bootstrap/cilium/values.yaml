@@ -4,22 +4,27 @@
 # Cilium is CNI-only: gatewayAPI and l7Proxy stay OFF. L7 + TLS live in Envoy
 # Gateway (apps/envoy-gateway), whose pod-based data plane needs only plain L4.
 #
-# 2026-09-10: retested the cilium gateway on 1.20.1 and ROOT-CAUSED #47940.
-# cilium-envoy sets IP_TRANSPARENT on every upstream socket unconditionally
-# (addPrivilegedSocketOptions() is a test-only override hardcoded to true), so
-# the CILIUM_PRE_mangle rule
+# 2026-09-10 / 2026-10-30: #47940 is ROOT-CAUSED and WORKED AROUND (see
+# bootstrap/os `cilium-accept-local`). cilium-envoy sets IP_TRANSPARENT on
+# every upstream socket, so the CILIUM_PRE_mangle rule
 #   ! -o lo -m socket --transparent ... -j MARK --set-xmark 0x200
-# matches the SYN-ACK coming back from a SAME-NODE backend, ip rule 9 sends it
-# to table 2004 (local default dev lo), and it never reaches Envoy's half-open
-# socket: SYN retransmit for ~6s, then RST. No drop counter fires.
-# Measured, 20 requests, one backend per node: as shipped 0/9 same-node vs
-# 11 failures; with that one rule deleted, 20/20 and zero failures. A plain
-# non-transparent socket on the identical 5-tuple returns 200.
-# bpf.tproxy does NOT help — it drops the TPROXY targets but leaves the
-# marking rule. No supported knob removes just that rule, so this needs an
-# upstream fix. Separately, wlan0 L7 ingress is still broken (#47400/#26584),
-# which only gatewayAPI.hostNetwork mode would sidestep.
-# DO NOT re-enable either flag without re-reading the issue thread first.
+# marks the SYN-ACK coming back from a SAME-NODE backend. That mark alone is
+# harmless, but Tailscale (>=1.98, netfilter-mode=on) sets
+# net.ipv4.conf.all.src_valid_mark=1 globally, so the kernel's reverse-path
+# source check includes the mark, resolves it via ip rule 9 -> table 2004
+# (local default dev lo) as RTN_LOCAL, and with accept_local=0 on the pod veth
+# drops the packet as IP_LOCAL_SOURCE in ip_rcv_finish_core. No cilium drop
+# counter fires. Same bug as cilium/cilium#47591 and #48706.
+# Measured 2026-10-30, 20 requests per node, one backend per node:
+#   lxc*.accept_local=0 -> same-node 0, remote 10, fail 10 (both nodes)
+#   lxc*.accept_local=1 -> same-node 10/9, remote 10/11, fail 0
+#   back to 0 -> fails again. The drop-in persists via sysctl.d + udev.
+# No upstream fix yet (cilium PR #48928 closed on process grounds, Tailscale
+# PR #19860 still a draft). Separately, wlan0 L7 ingress is still broken
+# (#47400/#26584), which only gatewayAPI.hostNetwork mode would sidestep.
+# Both flags stay OFF because Envoy Gateway is the serving path, not because
+# the cilium gateway is broken any more; the trial config is gatewayAPI.enabled
+# + l7Proxy + envoy.enabled all true, with the drop-in applied first.
 
 # Restart pods when config changes — without these, helm upgrades only
 # update the ConfigMap and running components keep stale config.
@@ -77,6 +82,14 @@ l2announcements:
 k8sClientRateLimit:
   qps: 50
   burst: 100
+# cilium-cli `upgrade` reuses the release's existing values, and `cilium hubble
+# enable --ui` once set relay/ui to true there, so `enabled: false` alone fails
+# chart validation ("Hubble Relay requires hubble.enabled=true"). Spell all
+# three out.
 hubble:
   enabled: false
+  relay:
+    enabled: false
+  ui:
+    enabled: false
 MTU: 1450

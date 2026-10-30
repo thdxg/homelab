@@ -18,15 +18,18 @@ Everything after this directory is applied by Flux, never by hand.
    `node-1`'s Tailscale address.
 5. `cilium:install`: the Gateway API CRDs (pinned to the version Envoy
    Gateway is built against), then Cilium as kube-proxy replacement with vxlan
-   tunneling, BPF masquerade, and Hubble (relay + UI). Cilium's own Gateway
-   API, L7 proxy and L2 announcements are **off**; L7 and TLS are Envoy
-   Gateway's job (`apps/envoy-gateway`).
+   tunneling and BPF masquerade. Hubble, Cilium's own Gateway API, L7 proxy
+   and L2 announcements are **off**; L7 and TLS are Envoy Gateway's job
+   (`apps/envoy-gateway`).
 6. `flux:install`: `flux bootstrap github` against `bootstrap/flux`, plus the
    sops age key Secret that Flux uses to decrypt secrets in `apps/`.
 
 Uninstall tasks for the k3s server and agent are also defined. `cilium:test`
-runs the connectivity test. `os:wifi` and `os:cilium-link` are one-off fixes
-that are not part of `all`.
+runs the connectivity test. `os:wifi`, `os:cilium-link` and
+`os:cilium-accept-local` are one-off fixes that are not part of `all`; the
+last one is required before Cilium's L7 proxy or Gateway API is ever enabled,
+because Tailscale's global `src_valid_mark=1` otherwise makes the kernel drop
+same-node proxy replies (cilium/cilium#47940, #48706).
 
 ## Inputs
 

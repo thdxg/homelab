@@ -86,3 +86,34 @@ sudo netplan apply
 EOF
 {% endfor %}
 """
+
+[tasks.cilium-accept-local]
+description = "Let same-node proxy replies through the kernel source check (Tailscale sets src_valid_mark=1)"
+run = """
+{% for node in ["node-1", "node-2"] %}
+ssh {{ node }} bash -s << 'EOF'
+# Tailscale >= 1.98 (netfilter-mode=on) sets net.ipv4.conf.all.src_valid_mark=1
+# globally, so the kernel includes the fwmark in reverse-path source
+# validation. Cilium marks proxy-bound packets 0x200 and routes that mark to
+# table 2004 (local default dev lo), so a same-node backend's reply to a
+# cilium-envoy upstream socket resolves as RTN_LOCAL on ingress via the pod
+# veth, and with accept_local=0 the stack drops it as IP_LOCAL_SOURCE — no
+# cilium drop counter fires. cilium/cilium#47940, #47591, #48706.
+# Same glob mechanism cilium's own 99-zzz-override_cilium.conf uses for
+# rp_filter: systemd-sysctl applies it at boot and udev (99-systemd.rules)
+# re-applies it to each new lxc* veth as it appears.
+sudo tee /etc/sysctl.d/90-cilium-accept-local.conf > /dev/null << 'CONF'
+# Accept RTN_LOCAL-classified sources on cilium pod veths. Needed because
+# Tailscale sets net.ipv4.conf.all.src_valid_mark=1 and cilium's 0x200 proxy
+# mark then makes same-node proxy replies look local (cilium/cilium#48706).
+# Spoofing protection for pod traffic is enforced in BPF, not by this check.
+-net.ipv4.conf.lxc*.accept_local = 1
+CONF
+# Apply to veths that already exist; new ones get it from udev.
+sudo /usr/lib/systemd/systemd-sysctl /etc/sysctl.d/90-cilium-accept-local.conf
+for d in /proc/sys/net/ipv4/conf/lxc*; do
+  echo "$(hostname) $(basename "$d") accept_local=$(cat "$d/accept_local")"
+done
+EOF
+{% endfor %}
+"""
