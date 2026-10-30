@@ -31,7 +31,7 @@ flux2 = "latest"
 
 [tasks.reboot]
 description = "Rolling-reboot both nodes, one at a time, keeping workloads served"
-confirm = "Rolling-reboot node-2 then node-1? Public ingress (the router forwards to node-1) drops while node-1 boots."
+confirm = "Rolling-reboot node-2 then node-1? Public ingress (the router forwards 80/443 to node-1, where cilium-envoy serves it from the host) drops while node-1 boots."
 run = """
 set -u
 
@@ -93,6 +93,12 @@ kubectl wait --for=condition=Ready node/{{ node }} --timeout=10m
 # would schedule pods onto a node that cannot yet network them.
 until_ok 5 60 kubectl wait --for=condition=Ready pod -n kube-system \
   -l k8s-app=cilium --field-selector=spec.nodeName={{ node }} --timeout=30s
+# Public edge before workloads: cilium-envoy (hostNetwork, the DaemonSet that
+# binds 80/443 on this node) must be serving again before the node takes
+# traffic back — the router forwards to node-1, so on node-1 this is the gap
+# the confirm prompt warns about.
+until_ok 5 60 kubectl wait --for=condition=Ready pod -n kube-system \
+  -l k8s-app=cilium-envoy --field-selector=spec.nodeName={{ node }} --timeout=30s
 
 echo "==> {{ node }}: uncordon"
 kubectl uncordon {{ node }}
@@ -106,7 +112,7 @@ respread() {
 }
 
 # Discovered, not listed: every Deployment wanting more than one replica. Keeps
-# new HA apps covered, and survives EG rehashing its proxy Deployment's name.
+# new HA apps covered without maintaining a list here.
 targets=$(kubectl get deploy -A \
   -o jsonpath='{range .items[?(@.spec.replicas>1)]}{.metadata.namespace}/{.metadata.name}{"\\n"}{end}')
 

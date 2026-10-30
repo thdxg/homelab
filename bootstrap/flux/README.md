@@ -24,4 +24,4 @@ uses them.
 
 Ordering that matters is expressed with `dependsOn`
 (`cert-manager-issuers` waits for `cert-manager`) and `wait: true` on the
-Kustomizations that install CRDs (`cert-manager`, `envoy-gateway`).
+Kustomizations that install CRDs (`cert-manager`).

@@ -12,15 +12,17 @@ Everything after this directory is applied by Flux, never by hand.
    k3s pods can start on Ubuntu 26.04.
 3. `k3s:install:master`, `k3s:install:worker`: k3s from config files (no CLI
    args), server on `node-1`, agent on `node-2`. Flannel, kube-proxy,
-   servicelb and Traefik are disabled; the NodePort range starts at 80 so the
-   public edge can use 80/443 directly.
+   servicelb and Traefik are disabled. (The NodePort range still starts at 80,
+   a harmless leftover from the Envoy Gateway edge; see the comment in
+   `bootstrap/k3s/mise.toml`.)
 4. `k3s:kubeconfig`: fetch the kubeconfig to this machine, pointed at
    `node-1`'s Tailscale address.
-5. `cilium:install`: the Gateway API CRDs (pinned to the version Envoy
-   Gateway is built against), then Cilium as kube-proxy replacement with vxlan
-   tunneling and BPF masquerade. Hubble, Cilium's own Gateway API, L7 proxy
-   and L2 announcements are **off**; L7 and TLS are Envoy Gateway's job
-   (`apps/envoy-gateway`).
+5. `cilium:install`: the Gateway API CRDs (pinned to v1.5.1, sufficient for
+   cilium 1.20.x), then Cilium as kube-proxy replacement with vxlan tunneling
+   and BPF masquerade. Cilium's Gateway API support and L7 proxy are **on**,
+   in hostNetwork mode: cilium-envoy binds the public edge's 80/443 on every
+   node and terminates TLS (`apps/networking`). Hubble and L2 announcements
+   are off. Requires `os:cilium-accept-local` first (below).
 6. `flux:install`: `flux bootstrap github` against `bootstrap/flux`, plus the
    sops age key Secret that Flux uses to decrypt secrets in `apps/`.
 

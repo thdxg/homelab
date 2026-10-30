@@ -44,7 +44,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval]))",
+     "expr": "sum(rate(envoy_cluster_upstream_rq_total{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\"}[$__rate_interval]))",
      "refId": "A",
      "legendFormat": "__auto"
     }
@@ -80,7 +80,7 @@
     "graphMode": "area",
     "textMode": "auto"
    },
-   "description": "All sites, from Envoy's per-route upstream counters."
+   "description": "All sites, from cilium-envoy's per-service upstream counters."
   },
   {
    "id": 2,
@@ -102,7 +102,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(envoy_http_downstream_cx_active{envoy_http_conn_manager_prefix=~\"http-10080|https-10443\"})",
+     "expr": "sum(envoy_http_downstream_cx_active{job=\"cilium-envoy\", envoy_http_conn_manager_prefix=~\"listener-insecure|listener-secure\"})",
      "refId": "A",
      "legendFormat": "__auto"
     }
@@ -159,7 +159,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/.*\", envoy_response_code_class=\"5\"}[$__rate_interval])) / sum(rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval]))",
+     "expr": "sum(rate(envoy_cluster_upstream_rq_xx{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\", envoy_response_code_class=\"5\"}[$__rate_interval])) / sum(rate(envoy_cluster_upstream_rq_xx{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\"}[$__rate_interval]))",
      "refId": "A",
      "legendFormat": "__auto"
     }
@@ -225,7 +225,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "histogram_quantile(0.95, sum by (le) (rate(envoy_cluster_upstream_rq_time_bucket{envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])))",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(envoy_cluster_upstream_rq_time_bucket{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\"}[$__rate_interval])))",
      "refId": "A",
      "legendFormat": "__auto"
     }
@@ -269,7 +269,7 @@
     "graphMode": "area",
     "textMode": "auto"
    },
-   "description": "Upstream request time as seen by Envoy, all sites."
+   "description": "Upstream request time as seen by cilium-envoy, all sites."
   },
   {
    "id": 5,
@@ -291,7 +291,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum by (site) (label_replace(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval]), \"site\", \"$1\", \"envoy_cluster_name\", \"httproute/[^/]+/([^/]+)/rule/.*\"))",
+     "expr": "sum by (site) (label_replace(rate(envoy_cluster_upstream_rq_total{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\"}[$__rate_interval]), \"site\", \"$1\", \"envoy_cluster_name\", \"networking/cilium-gateway-public-gateway-cilium/[^_]+_([^_]+)_[0-9]+\"))",
      "refId": "A",
      "legendFormat": "{{site}}"
     }
@@ -347,7 +347,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum by (envoy_response_code_class) (rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval]))",
+     "expr": "sum by (envoy_response_code_class) (rate(envoy_cluster_upstream_rq_xx{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\"}[$__rate_interval]))",
      "refId": "A",
      "legendFormat": "{{envoy_response_code_class}}xx"
     }
@@ -468,7 +468,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "histogram_quantile(0.95, sum by (le, site) (label_replace(rate(envoy_cluster_upstream_rq_time_bucket{envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval]), \"site\", \"$1\", \"envoy_cluster_name\", \"httproute/[^/]+/([^/]+)/rule/.*\")))",
+     "expr": "histogram_quantile(0.95, sum by (le, site) (label_replace(rate(envoy_cluster_upstream_rq_time_bucket{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\"}[$__rate_interval]), \"site\", \"$1\", \"envoy_cluster_name\", \"networking/cilium-gateway-public-gateway-cilium/[^_]+_([^_]+)_[0-9]+\")))",
      "refId": "A",
      "legendFormat": "{{site}}"
     }
@@ -525,7 +525,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum by (site) (label_replace(rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/.*\", envoy_response_code_class=\"5\"}[$__rate_interval]), \"site\", \"$1\", \"envoy_cluster_name\", \"httproute/[^/]+/([^/]+)/rule/.*\"))",
+     "expr": "sum by (site) (label_replace(rate(envoy_cluster_upstream_rq_xx{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\", envoy_response_code_class=\"5\"}[$__rate_interval]), \"site\", \"$1\", \"envoy_cluster_name\", \"networking/cilium-gateway-public-gateway-cilium/[^_]+_([^_]+)_[0-9]+\"))",
      "refId": "A",
      "legendFormat": "{{site}}"
     }
@@ -581,7 +581,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(rate(envoy_http_downstream_rq_completed{envoy_http_conn_manager_prefix=\"https-10443\"}[$__rate_interval]))",
+     "expr": "sum(rate(envoy_http_downstream_rq_completed{job=\"cilium-envoy\", envoy_http_conn_manager_prefix=\"listener-secure\"}[$__rate_interval]))",
      "refId": "A",
      "legendFormat": "HTTPS"
     },
@@ -590,7 +590,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(rate(envoy_http_downstream_rq_completed{envoy_http_conn_manager_prefix=\"http-10080\"}[$__rate_interval]))",
+     "expr": "sum(rate(envoy_http_downstream_rq_completed{job=\"cilium-envoy\", envoy_http_conn_manager_prefix=\"listener-insecure\"}[$__rate_interval]))",
      "refId": "B",
      "legendFormat": "HTTP"
     }
@@ -651,7 +651,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(rate(envoy_http_downstream_rq_http1_total{envoy_http_conn_manager_prefix=~\"http-10080|https-10443\"}[$__rate_interval]))",
+     "expr": "sum(rate(envoy_http_downstream_rq_http1_total{job=\"cilium-envoy\", envoy_http_conn_manager_prefix=~\"listener-insecure|listener-secure\"}[$__rate_interval]))",
      "refId": "A",
      "legendFormat": "HTTP/1.1"
     },
@@ -660,7 +660,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(rate(envoy_http_downstream_rq_http2_total{envoy_http_conn_manager_prefix=~\"http-10080|https-10443\"}[$__rate_interval]))",
+     "expr": "sum(rate(envoy_http_downstream_rq_http2_total{job=\"cilium-envoy\", envoy_http_conn_manager_prefix=~\"listener-insecure|listener-secure\"}[$__rate_interval]))",
      "refId": "B",
      "legendFormat": "HTTP/2"
     },
@@ -669,7 +669,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(rate(envoy_http_downstream_rq_http3_total{envoy_http_conn_manager_prefix=~\"http-10080|https-10443\"}[$__rate_interval]))",
+     "expr": "sum(rate(envoy_http_downstream_rq_http3_total{job=\"cilium-envoy\", envoy_http_conn_manager_prefix=~\"listener-insecure|listener-secure\"}[$__rate_interval]))",
      "refId": "C",
      "legendFormat": "HTTP/3"
     }
@@ -729,7 +729,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum by (site) (label_replace(increase(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"httproute/.*\"}[$__range]), \"site\", \"$1\", \"envoy_cluster_name\", \"httproute/[^/]+/([^/]+)/rule/.*\"))",
+     "expr": "sum by (site) (label_replace(increase(envoy_cluster_upstream_rq_total{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\"}[$__range]), \"site\", \"$1\", \"envoy_cluster_name\", \"networking/cilium-gateway-public-gateway-cilium/[^_]+_([^_]+)_[0-9]+\"))",
      "refId": "A",
      "legendFormat": "__auto",
      "instant": true,
@@ -741,7 +741,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum by (site) (label_replace(increase(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"httproute/.*\", envoy_response_code_class=\"5\"}[$__range]), \"site\", \"$1\", \"envoy_cluster_name\", \"httproute/[^/]+/([^/]+)/rule/.*\"))",
+     "expr": "sum by (site) (label_replace(increase(envoy_cluster_upstream_rq_xx{job=\"cilium-envoy\", envoy_cluster_name=~\"networking/cilium-gateway-public-gateway-cilium/.*\", envoy_response_code_class=\"5\"}[$__range]), \"site\", \"$1\", \"envoy_cluster_name\", \"networking/cilium-gateway-public-gateway-cilium/[^_]+_([^_]+)_[0-9]+\"))",
      "refId": "B",
      "legendFormat": "__auto",
      "instant": true,

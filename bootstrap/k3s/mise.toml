@@ -18,7 +18,10 @@ disable:
   - "servicelb"
   - "traefik"
 write-kubeconfig-mode: "644"
-# NodePorts 80/443 for the Envoy Gateway edge (router forwards same-port)
+# Leftover from the Envoy Gateway edge (NodePort Service on 80/443, removed
+# 2026-10-30): cilium-envoy now binds 80/443 directly in hostNetwork mode, so
+# the widened range is no longer needed. Left as is — nothing else claims ports
+# below 30000 and changing it would only restart the apiserver.
 kube-apiserver-arg:
   - "service-node-port-range=80-32767"
 YAML

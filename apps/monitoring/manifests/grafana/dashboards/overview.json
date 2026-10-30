@@ -350,7 +350,7 @@
       "type": "prometheus",
       "uid": "mimir"
      },
-     "expr": "sum(envoy_http_downstream_cx_active{envoy_http_conn_manager_prefix=~\"http-10080|https-10443\"})",
+     "expr": "sum(envoy_http_downstream_cx_active{job=\"cilium-envoy\", envoy_http_conn_manager_prefix=~\"listener-insecure|listener-secure\"})",
      "refId": "A",
      "legendFormat": "__auto"
     }

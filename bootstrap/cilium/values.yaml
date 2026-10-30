@@ -5,7 +5,8 @@
 # DaemonSet are ON, in hostNetwork mode, so cilium-envoy binds the public
 # Gateway's listener ports (80/443) directly on every node and the router's
 # same-port forward to node-1 (failover: node-2) lands on it. Replaced Envoy
-# Gateway (apps/envoy-gateway) in Oct/Nov 2026 — see apps/networking/README.md.
+# Gateway on 2026-10-30 (removed from the repo the same day) — see
+# apps/networking/README.md.
 #
 # HARD PREREQUISITE: `mise run "//bootstrap/os:cilium-accept-local"` on every
 # node BEFORE enabling any of this. Tailscale (>=1.98, netfilter-mode=on) sets
@@ -45,11 +46,11 @@ operator:
   rollOutPods: true
 cni:
   exclusive: true
-# When enabled, this needs Gateway API CRDs serving v1 for GatewayClass,
-# Gateway, HTTPRoute, GRPCRoute, TLSRoute, ReferenceGrant and BackendTLSPolicy
-# (RequiredGVKs in operator/pkg/gateway-api/helpers/schemes.go). The v1.5.1
-# bundle pinned in mise.toml serves v1 for all seven, so no CRD bump is needed
-# and Envoy Gateway keeps the CRD version it is compiled against.
+# Needs Gateway API CRDs serving v1 for GatewayClass, Gateway, HTTPRoute,
+# GRPCRoute, TLSRoute, ReferenceGrant and BackendTLSPolicy (RequiredGVKs in
+# operator/pkg/gateway-api/helpers/schemes.go). The v1.5.1 bundle pinned in
+# mise.toml serves v1 for all seven; bump it only with a cilium upgrade that
+# requires it.
 gatewayAPI:
   enabled: true
   # Advertise h2 via ALPN on the HTTPS listener (Cloudflare -> origin hop).
@@ -66,10 +67,11 @@ gatewayAPI:
     create: false
 nodePort:
   # Cilium's cgroup post_bind hook refuses host sockets on ports that are live
-  # NodePort frontends. Disabled for the Envoy Gateway -> cilium migration, when
-  # cilium-envoy must bind 80/443 while the old edge-gateway NodePort Service
-  # still exists (a NACKed listener is not retried). Re-enable (true) at the
-  # next routine upgrade once nothing else uses NodePorts 80/443.
+  # NodePort frontends. Disabled during the Envoy Gateway -> cilium migration
+  # (2026-10-30), when cilium-envoy had to bind 80/443 while the old
+  # edge-gateway NodePort Service still existed (a NACKed listener is not
+  # retried). That Service is gone, so set this back to true at the next
+  # routine cilium upgrade — nothing uses NodePorts 80/443 any more.
   bindProtection: false
 # L7 proxy ON for the gateway. 1.20.0 livelocked the agent<->envoy xDS channel
 # (cilium/cilium#47624) when the last L7 listener drained; fixed by

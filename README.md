@@ -9,7 +9,6 @@
 <img src="https://cdn.simpleicons.org/k3s/FFC61C" height="22"/>&nbsp;&nbsp;&nbsp;
 <img src="https://cdn.simpleicons.org/cilium/F8C517" height="22"/>&nbsp;&nbsp;&nbsp;
 <img src="https://cdn.simpleicons.org/flux/5468FF" height="22"/>&nbsp;&nbsp;&nbsp;
-<img src="https://cdn.simpleicons.org/envoyproxy/AC6199" height="22"/>&nbsp;&nbsp;&nbsp;
 <img src="https://cdn.simpleicons.org/letsencrypt/003A70" height="22"/>&nbsp;&nbsp;&nbsp;
 <img src="https://cdn.simpleicons.org/cloudflare/F38020" height="22"/>&nbsp;&nbsp;&nbsp;
 <img src="https://cdn.simpleicons.org/tailscale/242424" height="22"/>

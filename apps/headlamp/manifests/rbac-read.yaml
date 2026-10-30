@@ -24,7 +24,6 @@ rules:
   # never add a wildcard for the core ("") group, which contains Secrets.
   - apiGroups:
       - "gateway.networking.k8s.io"
-      - "gateway.envoyproxy.io"
       - "cilium.io"
       - "cert-manager.io"
       - "acme.cert-manager.io"

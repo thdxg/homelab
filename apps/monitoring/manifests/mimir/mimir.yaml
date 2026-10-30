@@ -72,7 +72,7 @@ limits:
   # queue entries and memory per query.
   query_sharding_total_shards: 4
   # Headroom for a two-node cluster; Mimir's defaults (150k series) are close
-  # to what cAdvisor + kube-state-metrics + Envoy produce here.
+  # to what cAdvisor + kube-state-metrics + cilium-envoy produce here.
   max_global_series_per_user: 300000
   ingestion_rate: 50000
   ingestion_burst_size: 500000
