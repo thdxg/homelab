@@ -1,7 +1,8 @@
 # Auto-update: the reflector lists tags on ghcr.io, the policy picks the newest
 # one, and the automation writes that tag back into deployment.yaml as a commit
-# on main — which the flux-system Kustomization then applies. So a push to
-# thdxg/macterm that touches website/ reaches this cluster with no manual step.
+# on main — which the flux-system Kustomization then applies. So a build of
+# macterm/website (a push there, or a docs or assets change in macterm/macterm,
+# which dispatches one) reaches this cluster with no manual step.
 #
 # The image is public, so no secretRef is needed to list its tags.
 apiVersion: image.toolkit.fluxcd.io/v1
@@ -9,7 +10,7 @@ kind: ImageRepository
 metadata:
   name: website
 spec:
-  image: ghcr.io/thdxg/macterm/website
+  image: ghcr.io/macterm/website
   interval: 5m
 ---
 # "Newest" here is purely lexical — alphabetical ordering over the tag strings
@@ -17,7 +18,7 @@ spec:
 # because the website workflow publishes a zero-padded UTC timestamp tag
 # (20260813-142259-62701be); this pattern deliberately excludes :latest and
 # :sha-<short>, which carry no order at all. The two formats are one contract:
-# changing the tag format in thdxg/macterm's .github/workflows/website.yml
+# changing the tag format in macterm/website's .github/workflows/build.yml
 # means changing this pattern in the same breath.
 apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
