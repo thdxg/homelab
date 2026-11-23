@@ -27,8 +27,8 @@ Everything after this directory is applied by Flux, never by hand.
    sops age key Secret that Flux uses to decrypt secrets in `apps/`.
 
 Uninstall tasks for the k3s server and agent are also defined. `cilium:test`
-runs the connectivity test. `os:wifi`, `os:cilium-link` and
-`os:cilium-accept-local` are one-off fixes that are not part of `all`; the
+runs the connectivity test. `os:wifi`, `os:wifi-powersave`, `os:cilium-link`
+and `os:cilium-accept-local` are one-off fixes that are not part of `all`; the
 last one is required before Cilium's L7 proxy or Gateway API is ever enabled,
 because Tailscale's global `src_valid_mark=1` otherwise makes the kernel drop
 same-node proxy replies on the pod veths and external clients on wlan0/eth0

@@ -87,6 +87,27 @@ EOF
 {% endfor %}
 """
 
+[tasks.wifi-powersave]
+description = "Keep wifi power save off (brcmfmac firmware hang, 2026-11-20)"
+run = """
+{% for node in ["node-1", "node-2"] %}
+ssh {{ node }} bash -s << 'EOF'
+# brcmfmac turns power save on every time it registers wlan0. On 2026-11-20
+# node-1's BCM4345/6 firmware wedged silently with it on: still associated,
+# no kernel errors, zero frames passing, so the DHCP lease expired and
+# Tailscale dropped for 3 days. Neither the driver nor netplan has a knob for
+# this, so a udev rule runs iw whenever wlan0 is added (boot, driver reload).
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq iw > /dev/null
+sudo tee /etc/udev/rules.d/70-wifi-powersave-off.rules > /dev/null << 'RULES'
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="wlan0", RUN+="/usr/sbin/iw dev %k set power_save off"
+RULES
+sudo udevadm control --reload
+sudo iw dev wlan0 set power_save off
+echo "$(hostname) $(iw dev wlan0 get power_save)"
+EOF
+{% endfor %}
+"""
+
 [tasks.cilium-accept-local]
 description = "Let cilium proxy traffic through the kernel source check (Tailscale sets src_valid_mark=1)"
 run = """
